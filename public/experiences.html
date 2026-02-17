@@ -8,6 +8,63 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .travelers-section {
+      background: var(--white);
+      border: 1px solid var(--warm-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .travelers-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .traveler-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .traveler-label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .traveler-input {
+      width: 60px;
+      padding: 0.5rem;
+      border: 1px solid var(--warm-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .inflation-note {
+      font-size: 0.78rem;
+      color: var(--text-faint);
+      margin-top: 0.75rem;
+    }
+    .experience-type-badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 100px;
+      background: var(--cream-deep);
+      color: var(--text-muted);
+    }
+    .experience-type-badge.recurring {
+      background: var(--teal-light);
+      color: var(--teal);
+    }
+    .tier-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+    .tier-luxury { background: #fef3c7; color: #b45309; }
+    .tier-premium { background: #dbeafe; color: #1d4ed8; }
+    .tier-local { background: #dcfce7; color: #15803d; }
+  </style>
 </head>
 <body>
 
@@ -35,8 +92,31 @@
   <header class="screen-header">
     <div class="screen-label">Step 2 of 3</div>
     <h1 class="screen-title">What experiences matter most?</h1>
-    <p class="screen-subtitle">Select the adventures, trips, and milestones you want in your life.</p>
+    <p class="screen-subtitle">Select your adventures. Costs are per person and adjust for inflation.</p>
   </header>
+
+  <section class="travelers-section">
+    <div class="form-section-title" style="margin-bottom: 1rem;">
+      <span class="form-section-icon">👥</span>
+      Who's Traveling?
+    </div>
+    <div class="travelers-row">
+      <div class="traveler-group">
+        <label class="traveler-label">Adults:</label>
+        <input type="number" id="adults-count" class="traveler-input" value="2" min="1" max="10">
+      </div>
+      <div class="traveler-group">
+        <label class="traveler-label">Children:</label>
+        <input type="number" id="children-count" class="traveler-input" value="0" min="0" max="10">
+      </div>
+      <div class="traveler-group">
+        <label class="traveler-label">Inflation:</label>
+        <input type="number" id="inflation-rate" class="traveler-input" value="3" min="0" max="10" step="0.5">
+        <span class="traveler-label">%/yr</span>
+      </div>
+    </div>
+    <p class="inflation-note">Costs shown are per person in today's dollars. Total family cost and future inflation will be calculated in your Life Map.</p>
+  </section>
 
   <div class="experience-categories" id="experience-categories"></div>
 
@@ -59,7 +139,7 @@
       <span class="summary-stat-value sunset" id="summary-oneway">0</span>
     </div>
     <div class="summary-stat">
-      <span class="summary-stat-label">Total</span>
+      <span class="summary-stat-label">Est. Total</span>
       <span class="summary-stat-value" id="summary-cost">$0</span>
     </div>
   </div>
@@ -68,49 +148,51 @@
 
 <script>
 (function() {
-  // Storage keys
   var STORAGE_KEYS = {
     financials: 'yolocalc_financials',
     children: 'yolocalc_children',
-    experiences: 'yolocalc_experiences'
+    experiences: 'yolocalc_experiences',
+    travelers: 'yolocalc_travelers'
   };
 
-  // Experience templates
+  // Simplified experience templates with 3 tiers
+  // Costs are PER PERSON in today's dollars
   var EXPERIENCE_TEMPLATES = [
-    { id: 'everest', name: 'Everest Base Camp Trek', category: 'adventure', icon: '🏔️', cost: 8000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 50 },
-    { id: 'scuba', name: 'Scuba Certification + Trip', category: 'adventure', icon: '🤿', cost: 4000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55 },
-    { id: 'safari', name: 'African Safari', category: 'adventure', icon: '🦁', cost: 12000, doorType: 'twoway' },
-    { id: 'patagonia', name: 'Patagonia Trek', category: 'adventure', icon: '🥾', cost: 6000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55 },
+    // One-time adventures (One-Way Doors)
+    { id: 'luxury-intl', name: 'Luxury International Trip', category: 'onetime', icon: '✈️', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 70, recurring: false, description: 'First-class travel, 5-star hotels (Japan, Maldives, Safari)' },
+    { id: 'premium-intl', name: 'Premium International Trip', category: 'onetime', icon: '🌍', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 75, recurring: false, description: 'Europe, South America, Southeast Asia' },
+    { id: 'local-trip', name: 'Domestic/Local Trip', category: 'onetime', icon: '🚗', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: false, description: 'National parks, beach week, ski trip' },
 
-    { id: 'disney', name: 'Disney World', category: 'family', icon: '🏰', cost: 6000, doorType: 'oneway', kidAgeMin: 4, kidAgeMax: 10, requiresKids: true },
-    { id: 'europe-family', name: 'Europe Family Trip', category: 'family', icon: '🗼', cost: 15000, doorType: 'oneway', kidAgeMin: 8, kidAgeMax: 14, requiresKids: true },
-    { id: 'national-parks', name: 'National Parks Road Trip', category: 'family', icon: '🏕️', cost: 5000, doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 14, requiresKids: true },
-    { id: 'ski-trip', name: 'Family Ski Trip', category: 'family', icon: '⛷️', cost: 5000, doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 16, requiresKids: true },
+    // Adventure experiences (One-Way Doors - physically demanding)
+    { id: 'everest', name: 'Everest Base Camp Trek', category: 'adventure', icon: '🏔️', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 50, recurring: false, description: 'Once-in-a-lifetime high altitude trek' },
+    { id: 'patagonia', name: 'Patagonia Adventure', category: 'adventure', icon: '🥾', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55, recurring: false, description: 'Hiking Torres del Paine' },
+    { id: 'safari', name: 'African Safari', category: 'adventure', icon: '🦁', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 70, recurring: false, description: 'Kenya, Tanzania, or Botswana' },
+    { id: 'scuba', name: 'Scuba Certification + Trip', category: 'adventure', icon: '🤿', costPerPerson: 5000, tier: 'local', doorType: 'oneway', optimalAgeMin: 18, optimalAgeMax: 55, recurring: false, description: 'Get certified and dive somewhere amazing' },
 
-    { id: 'multigen', name: '3-Generation Trip', category: 'multigen', icon: '👨‍👩‍👧‍👦', cost: 20000, doorType: 'oneway', optimalAgeMin: 35, optimalAgeMax: 55 },
+    // Family experiences (One-Way - kid age dependent)
+    { id: 'disney', name: 'Disney/Theme Parks', category: 'family', icon: '🏰', costPerPerson: 5000, tier: 'local', doorType: 'oneway', kidAgeMin: 4, kidAgeMax: 12, requiresKids: true, recurring: false, description: 'Magic Kingdom, Universal, etc.' },
+    { id: 'europe-family', name: 'Family Europe Trip', category: 'family', icon: '🗼', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', kidAgeMin: 8, kidAgeMax: 16, requiresKids: true, recurring: false, description: 'Educational travel with kids' },
+    { id: 'national-parks', name: 'National Parks Road Trip', category: 'family', icon: '🏕️', costPerPerson: 5000, tier: 'local', doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 16, requiresKids: true, recurring: false, description: 'Yellowstone, Grand Canyon, Yosemite' },
 
-    { id: 'japan', name: 'Japan Deep Dive', category: 'culture', icon: '🗾', cost: 8000, doorType: 'twoway' },
-    { id: 'italy', name: 'Italy Food & Wine Tour', category: 'culture', icon: '🍝', cost: 7000, doorType: 'twoway' },
-    { id: 'peru', name: 'Peru & Machu Picchu', category: 'culture', icon: '🏛️', cost: 6000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 65 },
-    { id: 'greece', name: 'Greek Islands', category: 'culture', icon: '🏛️', cost: 6000, doorType: 'twoway' },
+    // Recurring experiences
+    { id: 'annual-beach', name: 'Annual Beach Vacation', category: 'recurring', icon: '🏖️', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 20, description: 'Yearly family beach week' },
+    { id: 'annual-ski', name: 'Annual Ski Trip', category: 'recurring', icon: '⛷️', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, description: 'Yearly ski vacation' },
+    { id: 'biannual-intl', name: 'International Trip (Every 2 Years)', category: 'recurring', icon: '🌎', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringInterval: 2, recurringYears: 30, description: 'Regular international travel' },
 
-    { id: 'cruise', name: 'Caribbean Cruise', category: 'relaxation', icon: '🚢', cost: 5000, doorType: 'twoway' },
-    { id: 'beach-resort', name: 'Beach Resort Week', category: 'relaxation', icon: '🏖️', cost: 4000, doorType: 'twoway' },
-
-    { id: 'retirement-trip', name: 'Retirement Celebration', category: 'milestone', icon: '🎉', cost: 10000, doorType: 'twoway', atRetirement: true },
-    { id: 'anniversary', name: 'Anniversary Trip', category: 'milestone', icon: '💑', cost: 6000, doorType: 'twoway' }
+    // Milestone experiences
+    { id: 'retirement-trip', name: 'Retirement Celebration', category: 'milestone', icon: '🎉', costPerPerson: 20000, tier: 'luxury', doorType: 'twoway', atRetirement: true, recurring: false, description: 'The big trip when you retire' },
+    { id: 'anniversary-10', name: '10-Year Anniversary Trip', category: 'milestone', icon: '💑', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: false, adultsOnly: true, description: 'Celebrate a decade together' },
+    { id: 'multigen', name: 'Multi-Generation Family Trip', category: 'milestone', icon: '👨‍👩‍👧‍👦', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 35, optimalAgeMax: 55, recurring: false, description: '3 generations traveling together' }
   ];
 
   var CATEGORIES = {
-    adventure: { name: 'Adventure', icon: '🏔️' },
-    family: { name: 'Family', icon: '👨‍👩‍👧' },
-    multigen: { name: 'Multi-Generational', icon: '👨‍👩‍👧‍👦' },
-    culture: { name: 'Culture & Travel', icon: '🌍' },
-    relaxation: { name: 'Relaxation', icon: '🏖️' },
+    onetime: { name: 'Trip Tiers', icon: '✈️' },
+    adventure: { name: 'Adventures', icon: '🏔️' },
+    family: { name: 'Family Experiences', icon: '👨‍👩‍👧' },
+    recurring: { name: 'Recurring Trips', icon: '🔄' },
     milestone: { name: 'Milestones', icon: '🎉' }
   };
 
-  // Helper functions
   function saveData(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
   }
@@ -123,8 +205,9 @@
   }
 
   function formatCurrency(amount) {
+    if (amount >= 1000000) return '$' + (amount / 1000000).toFixed(1) + 'M';
     if (amount >= 1000) return '$' + Math.round(amount / 1000) + 'K';
-    return '$' + amount;
+    return '$' + Math.round(amount);
   }
 
   // DOM elements
@@ -135,24 +218,43 @@
   var summaryCost = document.getElementById('summary-cost');
   var continueBtn = document.getElementById('continue-btn');
   var summaryContinueBtn = document.getElementById('summary-continue-btn');
+  var adultsInput = document.getElementById('adults-count');
+  var childrenInput = document.getElementById('children-count');
+  var inflationInput = document.getElementById('inflation-rate');
 
   // State
   var selectedIds = [];
   var children = [];
-  var experienceCosts = {};
+  var travelers = { adults: 2, children: 0, inflation: 3 };
 
-  // Load data
   function loadSavedData() {
     children = loadData(STORAGE_KEYS.children, []);
     var savedExperiences = loadData(STORAGE_KEYS.experiences, []);
+    var savedTravelers = loadData(STORAGE_KEYS.travelers, null);
+
+    if (savedTravelers) {
+      travelers = savedTravelers;
+      adultsInput.value = travelers.adults;
+      childrenInput.value = travelers.children;
+      inflationInput.value = travelers.inflation;
+    } else {
+      // Default: set children count from saved children
+      travelers.children = children.length;
+      childrenInput.value = travelers.children;
+    }
 
     savedExperiences.forEach(function(exp) {
-      selectedIds.push(exp.id);
-      if (exp.cost) experienceCosts[exp.id] = exp.cost;
+      if (selectedIds.indexOf(exp.id) === -1) {
+        selectedIds.push(exp.id);
+      }
     });
   }
 
-  // Render categories
+  function getTotalTravelers(exp) {
+    if (exp.adultsOnly) return travelers.adults;
+    return travelers.adults + travelers.children;
+  }
+
   function renderCategories() {
     categoriesContainer.innerHTML = '';
 
@@ -160,7 +262,7 @@
       var category = CATEGORIES[categoryId];
       var categoryExps = EXPERIENCE_TEMPLATES.filter(function(exp) {
         if (exp.category !== categoryId) return false;
-        if (exp.requiresKids && children.length === 0) return false;
+        if (exp.requiresKids && children.length === 0 && travelers.children === 0) return false;
         return true;
       });
 
@@ -181,14 +283,16 @@
 
       categoryExps.forEach(function(exp) {
         var isSelected = selectedIds.indexOf(exp.id) !== -1;
-        var cost = experienceCosts[exp.id] || exp.cost;
         var doorClass = exp.doorType === 'oneway' ? 'door-oneway' : 'door-twoway';
         var doorLabel = exp.doorType === 'oneway' ? 'One-Way' : 'Two-Way';
+        var tierClass = 'tier-' + exp.tier;
+        var tierLabel = exp.tier.charAt(0).toUpperCase() + exp.tier.slice(1);
 
-        var meta = '';
-        if (exp.requiresKids) meta = 'Ages ' + exp.kidAgeMin + '-' + exp.kidAgeMax;
-        else if (exp.optimalAgeMin && exp.optimalAgeMax && exp.optimalAgeMax < 100) {
-          meta = 'Best ' + exp.optimalAgeMin + '-' + exp.optimalAgeMax;
+        var totalPeople = getTotalTravelers(exp);
+        var totalCost = exp.costPerPerson * totalPeople;
+        if (exp.recurring && exp.recurringYears) {
+          var intervals = exp.recurringInterval || 1;
+          totalCost = totalCost * Math.floor(exp.recurringYears / intervals);
         }
 
         html += '<div class="experience-card ' + (isSelected ? 'selected' : '') + '" data-id="' + exp.id + '">' +
@@ -196,10 +300,16 @@
           '<div class="experience-info">' +
           '<div class="experience-name">' + exp.icon + ' ' + exp.name + '</div>' +
           '<div class="experience-meta">' +
+          '<span class="tier-badge ' + tierClass + '">' + formatCurrency(exp.costPerPerson) + '/person</span>' +
           '<span class="experience-door ' + doorClass + '">' + doorLabel + '</span>' +
-          (meta ? '<span>' + meta + '</span>' : '') +
-          '</div></div>' +
-          '<input type="number" class="experience-cost-input" value="' + cost + '" data-id="' + exp.id + '" min="0" step="500">' +
+          (exp.recurring ? '<span class="experience-type-badge recurring">Recurring</span>' : '') +
+          '</div>' +
+          '<div style="font-size: 0.75rem; color: var(--text-faint); margin-top: 0.25rem;">' + exp.description + '</div>' +
+          '</div>' +
+          '<div style="text-align: right; min-width: 70px;">' +
+          '<div style="font-size: 0.95rem; font-weight: 600; color: var(--text);">' + formatCurrency(totalCost) + '</div>' +
+          '<div style="font-size: 0.68rem; color: var(--text-faint);">' + totalPeople + ' people' + (exp.recurring ? ' × ' + Math.floor((exp.recurringYears || 1) / (exp.recurringInterval || 1)) + ' trips' : '') + '</div>' +
+          '</div>' +
           '</div>';
       });
 
@@ -211,26 +321,15 @@
     // Add click handlers
     var cards = document.querySelectorAll('.experience-card');
     for (var i = 0; i < cards.length; i++) {
-      cards[i].addEventListener('click', function(e) {
-        if (e.target.classList.contains('experience-cost-input')) return;
-        var expId = this.getAttribute('data-id');
-        toggleExperience(expId);
-      });
-    }
-
-    // Add cost input handlers
-    var costInputs = document.querySelectorAll('.experience-cost-input');
-    for (var j = 0; j < costInputs.length; j++) {
-      costInputs[j].addEventListener('click', function(e) { e.stopPropagation(); });
-      costInputs[j].addEventListener('change', function(e) {
-        var expId = e.target.getAttribute('data-id');
-        experienceCosts[expId] = parseInt(e.target.value) || 0;
-        updateSummary();
-      });
+      (function(card) {
+        card.addEventListener('click', function() {
+          var expId = card.getAttribute('data-id');
+          toggleExperience(expId);
+        });
+      })(cards[i]);
     }
   }
 
-  // Toggle experience
   function toggleExperience(expId) {
     var idx = selectedIds.indexOf(expId);
     if (idx === -1) {
@@ -242,23 +341,26 @@
     updateSummary();
   }
 
-  // Update summary
   function updateSummary() {
-    var total = 0;
+    var totalCost = 0;
     var onewayCount = 0;
 
     selectedIds.forEach(function(id) {
       var exp = EXPERIENCE_TEMPLATES.find(function(e) { return e.id === id; });
       if (exp) {
-        var cost = experienceCosts[id] || exp.cost;
-        total += cost;
+        var people = getTotalTravelers(exp);
+        var cost = exp.costPerPerson * people;
+        if (exp.recurring && exp.recurringYears) {
+          cost = cost * Math.floor((exp.recurringYears || 1) / (exp.recurringInterval || 1));
+        }
+        totalCost += cost;
         if (exp.doorType === 'oneway') onewayCount++;
       }
     });
 
     summaryCount.textContent = selectedIds.length;
     summaryOneway.textContent = onewayCount;
-    summaryCost.textContent = formatCurrency(total);
+    summaryCost.textContent = formatCurrency(totalCost);
 
     if (selectedIds.length > 0) {
       selectedSummary.classList.add('visible');
@@ -267,24 +369,40 @@
     }
   }
 
-  // Save and continue
   function saveAndContinue() {
+    // Save travelers
+    travelers.adults = parseInt(adultsInput.value) || 2;
+    travelers.children = parseInt(childrenInput.value) || 0;
+    travelers.inflation = parseFloat(inflationInput.value) || 3;
+    saveData(STORAGE_KEYS.travelers, travelers);
+
+    // Save experiences
     var experiencesToSave = selectedIds.map(function(id) {
       var exp = EXPERIENCE_TEMPLATES.find(function(e) { return e.id === id; });
       if (!exp) return null;
+
+      var people = getTotalTravelers(exp);
+
       return {
         id: exp.id,
         name: exp.name,
         category: exp.category,
         icon: exp.icon,
-        cost: experienceCosts[id] || exp.cost,
+        costPerPerson: exp.costPerPerson,
+        totalPeople: people,
+        baseCost: exp.costPerPerson * people,
+        tier: exp.tier,
         doorType: exp.doorType,
         optimalAgeMin: exp.optimalAgeMin,
         optimalAgeMax: exp.optimalAgeMax,
         kidAgeMin: exp.kidAgeMin,
         kidAgeMax: exp.kidAgeMax,
         requiresKids: exp.requiresKids,
-        atRetirement: exp.atRetirement
+        atRetirement: exp.atRetirement,
+        recurring: exp.recurring,
+        recurringYears: exp.recurringYears,
+        recurringInterval: exp.recurringInterval || 1,
+        adultsOnly: exp.adultsOnly
       };
     }).filter(function(e) { return e !== null; });
 
@@ -292,7 +410,23 @@
     window.location.href = '/lifemap.html';
   }
 
-  // Event listeners
+  // Traveler input handlers
+  adultsInput.addEventListener('change', function() {
+    travelers.adults = parseInt(adultsInput.value) || 2;
+    renderCategories();
+    updateSummary();
+  });
+
+  childrenInput.addEventListener('change', function() {
+    travelers.children = parseInt(childrenInput.value) || 0;
+    renderCategories();
+    updateSummary();
+  });
+
+  inflationInput.addEventListener('change', function() {
+    travelers.inflation = parseFloat(inflationInput.value) || 3;
+  });
+
   continueBtn.addEventListener('click', saveAndContinue);
   summaryContinueBtn.addEventListener('click', saveAndContinue);
 

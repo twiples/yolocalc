@@ -35,7 +35,7 @@
   <header class="screen-header">
     <div class="screen-label">Your Life Map</div>
     <h1 class="screen-title">Here's the life you can live</h1>
-    <p class="screen-subtitle">Your money and experiences, mapped together.</p>
+    <p class="screen-subtitle">Your money and experiences, mapped together. Costs include inflation.</p>
   </header>
 
   <div class="score-grid" id="score-grid">
@@ -50,9 +50,9 @@
       <div class="score-sub">Time-sensitive</div>
     </div>
     <div class="score-card">
-      <div class="score-label">Kids' Windows</div>
-      <div class="score-value sunset" id="score-kids">0 of 0</div>
-      <div class="score-sub">Family trips</div>
+      <div class="score-label">Total Experience Cost</div>
+      <div class="score-value sunset" id="score-exp-cost">$0</div>
+      <div class="score-sub" id="score-exp-cost-sub">With inflation</div>
     </div>
     <div class="score-card">
       <div class="score-label">Balance at 85</div>
@@ -108,11 +108,11 @@
 
 <script>
 (function() {
-  // Storage keys
   var STORAGE_KEYS = {
     financials: 'yolocalc_financials',
     children: 'yolocalc_children',
-    experiences: 'yolocalc_experiences'
+    experiences: 'yolocalc_experiences',
+    travelers: 'yolocalc_travelers'
   };
 
   var DEFAULTS = {
@@ -123,7 +123,6 @@
     annualReturn: 7
   };
 
-  // Helper functions
   function loadData(key, defaultValue) {
     try {
       var stored = localStorage.getItem(key);
@@ -141,14 +140,17 @@
   var financials = {};
   var children = [];
   var experiences = [];
+  var travelers = { adults: 2, children: 0, inflation: 3 };
   var scheduledExperiences = [];
   var trajectory = [];
+  var totalExpCost = 0;
 
   // DOM elements
   var scoreFunded = document.getElementById('score-funded');
   var scoreFundedSub = document.getElementById('score-funded-sub');
   var scoreOneway = document.getElementById('score-oneway');
-  var scoreKids = document.getElementById('score-kids');
+  var scoreExpCost = document.getElementById('score-exp-cost');
+  var scoreExpCostSub = document.getElementById('score-exp-cost-sub');
   var scoreBalance = document.getElementById('score-balance');
   var scoreBalanceSub = document.getElementById('score-balance-sub');
   var timelineSvg = document.getElementById('timeline-svg');
@@ -161,7 +163,6 @@
   var contributionSlider = document.getElementById('contribution-slider');
   var contributionSliderValue = document.getElementById('contribution-slider-value');
 
-  // Load data
   function loadSavedData() {
     var savedFinancials = loadData(STORAGE_KEYS.financials, {});
     financials = {
@@ -174,6 +175,7 @@
 
     children = loadData(STORAGE_KEYS.children, []);
     experiences = loadData(STORAGE_KEYS.experiences, []);
+    travelers = loadData(STORAGE_KEYS.travelers, { adults: 2, children: 0, inflation: 3 });
 
     retireSlider.value = financials.retirementAge;
     contributionSlider.value = financials.monthlyContribution;
@@ -181,7 +183,6 @@
     contributionSliderValue.textContent = formatCurrency(financials.monthlyContribution);
   }
 
-  // Setup sliders
   function setupSliders() {
     retireSlider.addEventListener('input', function(e) {
       financials.retirementAge = parseInt(e.target.value);
@@ -196,11 +197,16 @@
     });
   }
 
-  // Get optimal age for experience
+  // Apply inflation to cost
+  function getInflatedCost(baseCost, yearsFromNow) {
+    var inflationRate = travelers.inflation / 100;
+    return baseCost * Math.pow(1 + inflationRate, yearsFromNow);
+  }
+
   function getOptimalAge(exp) {
     if (exp.requiresKids && children.length > 0) {
       var yearsUntilKidInRange = children.map(function(child) {
-        return Math.max(0, exp.kidAgeMin - child.age);
+        return Math.max(0, (exp.kidAgeMin || 0) - child.age);
       });
       var soonest = Math.min.apply(null, yearsUntilKidInRange);
       return financials.age + soonest;
@@ -219,24 +225,60 @@
     return financials.age + 1;
   }
 
-  // Schedule experiences
   function scheduleExperiences() {
-    scheduledExperiences = experiences.map(function(exp) {
-      var optimal = getOptimalAge(exp);
-      return {
-        id: exp.id,
-        name: exp.name,
-        icon: exp.icon,
-        cost: exp.cost,
-        doorType: exp.doorType,
-        requiresKids: exp.requiresKids,
-        scheduledAge: Math.max(financials.age + 1, Math.min(optimal, 85))
-      };
+    scheduledExperiences = [];
+    totalExpCost = 0;
+
+    experiences.forEach(function(exp) {
+      var baseCost = exp.baseCost || (exp.costPerPerson * (exp.totalPeople || 2));
+
+      if (exp.recurring && exp.recurringYears) {
+        // Schedule multiple instances of recurring experience
+        var interval = exp.recurringInterval || 1;
+        var startAge = financials.age + 1;
+        var endAge = Math.min(financials.age + exp.recurringYears, 85);
+
+        for (var age = startAge; age <= endAge; age += interval) {
+          var yearsFromNow = age - financials.age;
+          var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
+          totalExpCost += inflatedCost;
+
+          scheduledExperiences.push({
+            id: exp.id + '-' + age,
+            name: exp.name,
+            icon: exp.icon,
+            baseCost: baseCost,
+            cost: inflatedCost,
+            doorType: exp.doorType,
+            scheduledAge: age,
+            recurring: true
+          });
+        }
+      } else {
+        // One-time experience
+        var optimal = getOptimalAge(exp);
+        var scheduledAge = Math.max(financials.age + 1, Math.min(optimal, 85));
+        var yearsFromNow = scheduledAge - financials.age;
+        var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
+        totalExpCost += inflatedCost;
+
+        scheduledExperiences.push({
+          id: exp.id,
+          name: exp.name,
+          icon: exp.icon,
+          baseCost: baseCost,
+          cost: inflatedCost,
+          doorType: exp.doorType,
+          requiresKids: exp.requiresKids,
+          scheduledAge: scheduledAge,
+          recurring: false
+        });
+      }
     });
+
     scheduledExperiences.sort(function(a, b) { return a.scheduledAge - b.scheduledAge; });
   }
 
-  // Calculate trajectory
   function calculateTrajectory() {
     var startAge = financials.age;
     var endAge = 85;
@@ -268,26 +310,25 @@
     }
   }
 
-  // Render score cards
   function renderScoreCards() {
     var total = experiences.length;
     var onewayExp = experiences.filter(function(e) { return e.doorType === 'oneway'; });
-    var kidsExp = experiences.filter(function(e) { return e.requiresKids; });
     var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
 
     var funded = endBalance > 0 ? total : Math.floor(total * 0.7);
     var fundedOneway = endBalance > 0 ? onewayExp.length : Math.floor(onewayExp.length * 0.8);
-    var fundedKids = endBalance > 0 ? kidsExp.length : Math.floor(kidsExp.length * 0.8);
 
     scoreFunded.textContent = funded + ' of ' + total;
     scoreFundedSub.textContent = total > 0 ? Math.round(funded / total * 100) + '% of your dreams' : 'Add experiences';
     scoreOneway.textContent = fundedOneway + ' of ' + onewayExp.length;
-    scoreKids.textContent = fundedKids + ' of ' + kidsExp.length;
+
+    scoreExpCost.textContent = formatCurrency(totalExpCost);
+    scoreExpCostSub.textContent = travelers.inflation + '% inflation/yr';
+
     scoreBalance.textContent = formatCurrency(endBalance);
     scoreBalanceSub.textContent = endBalance > 100000 ? 'Comfortable cushion' : endBalance > 0 ? 'Tight but possible' : 'Needs adjustment';
   }
 
-  // Render timeline
   function renderTimeline() {
     if (trajectory.length === 0) return;
 
@@ -305,28 +346,24 @@
     timelineSvg.innerHTML = '';
     timelineSvg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
 
-    // Create points
     var points = trajectory.map(function(t, i) {
       var x = padding.left + (i / (trajectory.length - 1)) * chartWidth;
       var y = padding.top + chartHeight - (t.value / maxValue) * chartHeight;
       return x + ',' + y;
     });
 
-    // Gradient
     var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = '<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="#e07c3e" stop-opacity="0.2"/>' +
       '<stop offset="100%" stop-color="#e07c3e" stop-opacity="0"/></linearGradient>';
     timelineSvg.appendChild(defs);
 
-    // Area
     var area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     var areaD = 'M' + padding.left + ',' + (padding.top + chartHeight) + ' L' + points.join(' L') + ' L' + (padding.left + chartWidth) + ',' + (padding.top + chartHeight) + ' Z';
     area.setAttribute('d', areaD);
     area.setAttribute('fill', 'url(#areaGrad)');
     timelineSvg.appendChild(area);
 
-    // Line
     var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     line.setAttribute('d', 'M' + points.join(' L'));
     line.setAttribute('stroke', '#e07c3e');
@@ -334,7 +371,6 @@
     line.setAttribute('fill', 'none');
     timelineSvg.appendChild(line);
 
-    // Retirement line
     var retireIndex = financials.retirementAge - startAge;
     if (retireIndex > 0 && retireIndex < trajectory.length) {
       var retireX = padding.left + (retireIndex / (trajectory.length - 1)) * chartWidth;
@@ -373,9 +409,14 @@
       timelineYaxis.appendChild(label);
     });
 
-    // Experience markers
+    // Experience markers - only show non-recurring or first of recurring
     experienceMarkers.innerHTML = '';
+    var shownIds = {};
     scheduledExperiences.forEach(function(exp) {
+      var baseId = exp.id.split('-')[0];
+      if (exp.recurring && shownIds[baseId]) return; // Only show first instance of recurring
+      shownIds[baseId] = true;
+
       var ageIndex = Math.floor(exp.scheduledAge) - startAge;
       if (ageIndex < 0 || ageIndex >= trajectory.length) return;
 
@@ -391,13 +432,12 @@
       var dotClass = exp.doorType === 'oneway' ? 'oneway' : 'twoway';
       marker.innerHTML = '<div class="exp-marker-dot ' + dotClass + '">' + exp.icon + '</div>' +
         '<span class="exp-marker-label">' + exp.name.split(' ').slice(0, 2).join(' ') + '</span>';
-      marker.title = exp.name + ' - ' + formatCurrency(exp.cost) + ' at age ' + Math.floor(exp.scheduledAge);
+      marker.title = exp.name + ' - ' + formatCurrency(exp.cost) + ' at age ' + Math.floor(exp.scheduledAge) + (exp.recurring ? ' (recurring)' : '');
 
       experienceMarkers.appendChild(marker);
     });
   }
 
-  // Render insights
   function renderInsights() {
     var insights = [];
 
@@ -417,7 +457,7 @@
     // Kids windows
     children.forEach(function(child) {
       experiences.forEach(function(exp) {
-        if (exp.requiresKids) {
+        if (exp.requiresKids && exp.kidAgeMax) {
           var yearsLeft = exp.kidAgeMax - child.age;
           if (yearsLeft > 0 && yearsLeft <= 5) {
             insights.push({
@@ -428,6 +468,24 @@
         }
       });
     });
+
+    // Inflation impact
+    if (totalExpCost > 0) {
+      var todaysCost = experiences.reduce(function(sum, e) {
+        var base = e.baseCost || (e.costPerPerson * (e.totalPeople || 2));
+        if (e.recurring && e.recurringYears) {
+          return sum + base * Math.floor(e.recurringYears / (e.recurringInterval || 1));
+        }
+        return sum + base;
+      }, 0);
+      var inflationImpact = totalExpCost - todaysCost;
+      if (inflationImpact > 10000) {
+        insights.push({
+          icon: '📈',
+          text: 'Inflation adds <strong>' + formatCurrency(inflationImpact) + '</strong> to your experience costs over time'
+        });
+      }
+    }
 
     // Balance insight
     var retireBalance = trajectory.find(function(t) { return t.age === financials.retirementAge; });
@@ -464,7 +522,6 @@
     }).join('');
   }
 
-  // Main render
   function calculateAndRender() {
     scheduleExperiences();
     calculateTrajectory();
@@ -473,12 +530,10 @@
     renderInsights();
   }
 
-  // Resize handler
   window.addEventListener('resize', function() {
     renderTimeline();
   });
 
-  // Initialize
   loadSavedData();
   setupSliders();
   calculateAndRender();
