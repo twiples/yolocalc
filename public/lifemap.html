@@ -50,6 +50,11 @@
       <div class="score-sub" id="score-exp-cost-sub">With inflation</div>
     </div>
     <div class="score-card">
+      <div class="score-label">Memory Dividends</div>
+      <div class="score-value green" id="score-dividends">0</div>
+      <div class="score-sub" id="score-dividends-sub">Years of memories</div>
+    </div>
+    <div class="score-card">
       <div class="score-label">Balance at 85</div>
       <div class="score-value default" id="score-balance">$0</div>
       <div class="score-sub" id="score-balance-sub">Your cushion</div>
@@ -74,6 +79,34 @@
   <div class="insights-section" id="insights-section">
     <div class="insights-title">Insights</div>
     <div class="insight-list" id="insight-list"></div>
+  </div>
+
+  <div class="dwz-section" id="dwz-section">
+    <div class="dwz-header">
+      <div class="dwz-title">
+        <span class="dwz-icon">🎯</span>
+        Die With Zero Mode
+      </div>
+      <label class="dwz-toggle">
+        <input type="checkbox" id="dwz-toggle">
+        <span class="dwz-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="dwz-content" id="dwz-content" style="display: none;">
+      <div class="dwz-stat-grid">
+        <div class="dwz-stat">
+          <div class="dwz-stat-label">Unused at 85</div>
+          <div class="dwz-stat-value" id="dwz-unused">$0</div>
+          <div class="dwz-stat-sub">Money you worked for but never used</div>
+        </div>
+        <div class="dwz-stat">
+          <div class="dwz-stat-label">Experiences Left Behind</div>
+          <div class="dwz-stat-value sunset" id="dwz-experiences">0</div>
+          <div class="dwz-stat-sub" id="dwz-experiences-sub">Premium trips you could have taken</div>
+        </div>
+      </div>
+      <div class="dwz-suggestions" id="dwz-suggestions"></div>
+    </div>
   </div>
 
   <div class="sliders-section">
@@ -144,6 +177,8 @@
   var scoreFundedSub = document.getElementById('score-funded-sub');
   var scoreExpCost = document.getElementById('score-exp-cost');
   var scoreExpCostSub = document.getElementById('score-exp-cost-sub');
+  var scoreDividends = document.getElementById('score-dividends');
+  var scoreDividendsSub = document.getElementById('score-dividends-sub');
   var scoreBalance = document.getElementById('score-balance');
   var scoreBalanceSub = document.getElementById('score-balance-sub');
   var timelineSvg = document.getElementById('timeline-svg');
@@ -155,6 +190,14 @@
   var retireSliderValue = document.getElementById('retire-slider-value');
   var contributionSlider = document.getElementById('contribution-slider');
   var contributionSliderValue = document.getElementById('contribution-slider-value');
+
+  // Die With Zero elements
+  var dwzToggle = document.getElementById('dwz-toggle');
+  var dwzContent = document.getElementById('dwz-content');
+  var dwzUnused = document.getElementById('dwz-unused');
+  var dwzExperiences = document.getElementById('dwz-experiences');
+  var dwzExperiencesSub = document.getElementById('dwz-experiences-sub');
+  var dwzSuggestions = document.getElementById('dwz-suggestions');
 
   function loadSavedData() {
     var savedFinancials = loadData(STORAGE_KEYS.financials, {});
@@ -371,6 +414,12 @@
     scoreExpCost.textContent = formatCurrency(totalExpCost);
     scoreExpCostSub.textContent = travelers.inflation + '% inflation/yr';
 
+    // Memory dividends - years of memories from experiences
+    var memoryDividends = calculateMemoryDividends();
+    scoreDividends.textContent = memoryDividends;
+    var avgDividendsPerExp = scheduledExperiences.length > 0 ? Math.round(memoryDividends / scheduledExperiences.length) : 0;
+    scoreDividendsSub.textContent = avgDividendsPerExp + ' avg years per trip';
+
     scoreBalance.textContent = formatCurrency(endBalance);
     scoreBalanceSub.textContent = endBalance > 100000 ? 'Comfortable cushion' : endBalance > 0 ? 'Tight but possible' : 'Needs adjustment';
   }
@@ -556,13 +605,137 @@
     }).join('');
   }
 
+  // Calculate memory dividends - years of memories from each experience
+  function calculateMemoryDividends() {
+    var totalDividends = 0;
+    var endOfLife = 85;
+
+    scheduledExperiences.forEach(function(exp) {
+      var yearsOfMemories = endOfLife - exp.scheduledAge;
+      totalDividends += Math.max(0, yearsOfMemories);
+    });
+
+    return totalDividends;
+  }
+
+  // Die With Zero calculations
+  function renderDieWithZero() {
+    var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
+
+    // Calculate unused money and convert to experiences
+    var avgTripCost = 10000 * (travelers.adults + travelers.children); // Premium trip
+    var unusedExperiences = Math.floor(endBalance / avgTripCost);
+
+    dwzUnused.textContent = formatCurrency(endBalance);
+    dwzExperiences.textContent = unusedExperiences;
+
+    if (unusedExperiences === 1) {
+      dwzExperiencesSub.textContent = 'Premium trip you could have taken';
+    } else {
+      dwzExperiencesSub.textContent = 'Premium trips you could have taken';
+    }
+
+    // Generate suggestions
+    var suggestions = [];
+
+    if (endBalance > 100000) {
+      // Calculate how much earlier they could retire
+      var yearsEarlier = Math.floor(endBalance / (financials.monthlyContribution * 12 + 50000));
+      if (yearsEarlier > 0 && financials.retirementAge - yearsEarlier >= 55) {
+        suggestions.push({
+          icon: '🏖️',
+          title: 'Retire ' + yearsEarlier + ' year' + (yearsEarlier > 1 ? 's' : '') + ' earlier',
+          desc: 'You\'re saving more than you need. Start living sooner.'
+        });
+      }
+
+      // Upgrade trips suggestion
+      var upgradeCount = Math.floor(endBalance / 10000);
+      suggestions.push({
+        icon: '✈️',
+        title: 'Upgrade ' + Math.min(upgradeCount, 10) + ' trips to luxury',
+        desc: 'Turn local trips into premium, or premium into luxury.'
+      });
+    }
+
+    if (endBalance > 50000) {
+      // Add more experiences
+      suggestions.push({
+        icon: '🌍',
+        title: 'Add ' + unusedExperiences + ' more experience' + (unusedExperiences > 1 ? 's' : ''),
+        desc: 'Your money is waiting to become memories.'
+      });
+
+      // Give with warm hand
+      if (children.length > 0 || travelers.children > 0) {
+        var giftPerKid = Math.floor(endBalance / Math.max(1, children.length || travelers.children) / 2);
+        suggestions.push({
+          icon: '🎁',
+          title: 'Give $' + Math.round(giftPerKid / 1000) + 'K to each child now',
+          desc: 'Money has more impact when they\'re young.'
+        });
+      }
+    }
+
+    if (endBalance > 200000) {
+      // Reduce monthly savings
+      var excessMonthly = Math.floor((endBalance - 50000) / ((85 - financials.age) * 12));
+      suggestions.push({
+        icon: '💰',
+        title: 'Save $' + Math.round(excessMonthly) + ' less per month',
+        desc: 'Redirect to experiences now, not savings you won\'t use.'
+      });
+    }
+
+    // Memory dividend insight
+    var memoryDividends = calculateMemoryDividends();
+    if (memoryDividends > 0 && unusedExperiences > 0) {
+      var missedDividends = unusedExperiences * 20; // avg 20 years of memories per trip
+      suggestions.push({
+        icon: '🧠',
+        title: missedDividends + ' years of memories lost',
+        desc: 'Each trip pays dividends every time you remember it.'
+      });
+    }
+
+    if (suggestions.length === 0) {
+      suggestions.push({
+        icon: '🎯',
+        title: 'You\'re close to optimal!',
+        desc: 'Your money and experiences are well balanced.'
+      });
+    }
+
+    dwzSuggestions.innerHTML = suggestions.map(function(s) {
+      return '<div class="dwz-suggestion">' +
+        '<span class="dwz-suggestion-icon">' + s.icon + '</span>' +
+        '<div class="dwz-suggestion-text">' +
+        '<div class="dwz-suggestion-title">' + s.title + '</div>' +
+        '<div class="dwz-suggestion-desc">' + s.desc + '</div>' +
+        '</div></div>';
+    }).join('');
+  }
+
   function calculateAndRender() {
     scheduleExperiences();
     calculateTrajectory();
     renderScoreCards();
     renderTimeline();
     renderInsights();
+    if (dwzToggle.checked) {
+      renderDieWithZero();
+    }
   }
+
+  // Die With Zero toggle handler
+  dwzToggle.addEventListener('change', function() {
+    if (dwzToggle.checked) {
+      dwzContent.style.display = 'block';
+      renderDieWithZero();
+    } else {
+      dwzContent.style.display = 'none';
+    }
+  });
 
   window.addEventListener('resize', function() {
     renderTimeline();

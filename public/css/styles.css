@@ -946,6 +946,168 @@ nav {
   font-weight: 600;
 }
 
+/* Die With Zero Mode */
+.dwz-section {
+  background: var(--white);
+  border: 2px solid var(--teal);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dwz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dwz-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dwz-icon {
+  font-size: 1.2rem;
+}
+
+.dwz-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.dwz-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dwz-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--cream-deep);
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.dwz-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.dwz-toggle input:checked + .dwz-toggle-slider {
+  background-color: var(--teal);
+}
+
+.dwz-toggle input:checked + .dwz-toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.dwz-content {
+  margin-top: 1.5rem;
+}
+
+.dwz-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dwz-stat {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.dwz-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.5rem;
+}
+
+.dwz-stat-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.dwz-stat-value.sunset {
+  color: var(--sunset);
+}
+
+.dwz-stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+.dwz-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dwz-suggestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--teal-soft) 0%, rgba(0, 151, 178, 0.03) 100%);
+  border-radius: 10px;
+  border-left: 3px solid var(--teal);
+}
+
+.dwz-suggestion-icon {
+  font-size: 1.25rem;
+  margin-top: 0.1rem;
+}
+
+.dwz-suggestion-text {
+  flex: 1;
+}
+
+.dwz-suggestion-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.dwz-suggestion-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .dwz-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Sliders */
 .sliders-section {
   background: var(--white);
