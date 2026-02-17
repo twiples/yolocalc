@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Experiences | YoloCalc</title>
-  <meta name="description" content="Choose the experiences that matter most to you. Mark your one-way doors.">
+  <meta name="description" content="Choose the experiences that matter most to you.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
@@ -31,52 +31,19 @@
   </div>
 </nav>
 
-<main class="app-container" style="padding-bottom: 100px;">
+<main class="app-container" style="padding-bottom: 120px;">
   <header class="screen-header">
     <div class="screen-label">Step 2 of 3</div>
     <h1 class="screen-title">What experiences matter most?</h1>
-    <p class="screen-subtitle">Select the adventures, trips, and milestones you want in your life. We'll help you time them perfectly.</p>
+    <p class="screen-subtitle">Select the adventures, trips, and milestones you want in your life.</p>
   </header>
 
-  <div class="experience-categories" id="experience-categories">
-    <!-- Categories will be rendered here -->
-  </div>
-
-  <section class="add-custom-section">
-    <button type="button" class="add-custom-btn" id="toggle-custom-btn">
-      <span>+</span> Add Custom Experience
-    </button>
-    <div class="custom-form" id="custom-form">
-      <div class="custom-form-grid">
-        <div class="form-group">
-          <label class="form-label" for="custom-name">Experience Name</label>
-          <input type="text" id="custom-name" class="form-input" placeholder="e.g., Bali Yoga Retreat">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="custom-cost">Cost</label>
-          <div class="input-prefix">
-            <input type="number" id="custom-cost" class="form-input" placeholder="5000" min="0">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="custom-type">Type</label>
-          <select id="custom-type" class="form-input">
-            <option value="twoway">Two-Way Door (Flexible)</option>
-            <option value="oneway">One-Way Door (Time-Sensitive)</option>
-          </select>
-        </div>
-      </div>
-      <button type="button" class="btn-primary" id="add-custom-btn" style="margin-top: 0.5rem;">
-        Add Experience
-      </button>
-    </div>
-  </section>
+  <div class="experience-categories" id="experience-categories"></div>
 
   <div class="btn-row" style="margin-top: 2rem;">
-    <a href="/calculator.html" class="btn-secondary">← Back to Finances</a>
+    <a href="/calculator.html" class="btn-secondary">← Back</a>
     <button type="button" class="btn-primary" id="continue-btn">
-      See Your Life Map
-      <span>→</span>
+      See Your Life Map <span>→</span>
     </button>
   </div>
 </main>
@@ -88,255 +55,252 @@
       <span class="summary-stat-value" id="summary-count">0</span>
     </div>
     <div class="summary-stat">
-      <span class="summary-stat-label">One-Way Doors</span>
+      <span class="summary-stat-label">One-Way</span>
       <span class="summary-stat-value sunset" id="summary-oneway">0</span>
     </div>
     <div class="summary-stat">
-      <span class="summary-stat-label">Total Cost</span>
+      <span class="summary-stat-label">Total</span>
       <span class="summary-stat-value" id="summary-cost">$0</span>
     </div>
   </div>
-  <button type="button" class="btn-primary" onclick="window.location.href='/lifemap.html'">
-    Continue →
-  </button>
+  <button type="button" class="btn-primary" id="summary-continue-btn">Continue →</button>
 </div>
 
-<script src="/js/data.js"></script>
 <script>
-  const { EXPERIENCE_TEMPLATES, CATEGORIES, STORAGE_KEYS, saveData, loadData, formatCurrency } = window.YoloCalc;
+(function() {
+  // Storage keys
+  var STORAGE_KEYS = {
+    financials: 'yolocalc_financials',
+    children: 'yolocalc_children',
+    experiences: 'yolocalc_experiences'
+  };
 
-  // DOM Elements
-  const categoriesContainer = document.getElementById('experience-categories');
-  const selectedSummary = document.getElementById('selected-summary');
-  const summaryCount = document.getElementById('summary-count');
-  const summaryOneway = document.getElementById('summary-oneway');
-  const summaryCost = document.getElementById('summary-cost');
-  const toggleCustomBtn = document.getElementById('toggle-custom-btn');
-  const customForm = document.getElementById('custom-form');
-  const addCustomBtn = document.getElementById('add-custom-btn');
-  const continueBtn = document.getElementById('continue-btn');
+  // Experience templates
+  var EXPERIENCE_TEMPLATES = [
+    { id: 'everest', name: 'Everest Base Camp Trek', category: 'adventure', icon: '🏔️', cost: 8000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 50 },
+    { id: 'scuba', name: 'Scuba Certification + Trip', category: 'adventure', icon: '🤿', cost: 4000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55 },
+    { id: 'safari', name: 'African Safari', category: 'adventure', icon: '🦁', cost: 12000, doorType: 'twoway' },
+    { id: 'patagonia', name: 'Patagonia Trek', category: 'adventure', icon: '🥾', cost: 6000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55 },
 
-  // State
-  let selectedExperiences = [];
-  let allExperiences = [...EXPERIENCE_TEMPLATES];
-  let children = [];
+    { id: 'disney', name: 'Disney World', category: 'family', icon: '🏰', cost: 6000, doorType: 'oneway', kidAgeMin: 4, kidAgeMax: 10, requiresKids: true },
+    { id: 'europe-family', name: 'Europe Family Trip', category: 'family', icon: '🗼', cost: 15000, doorType: 'oneway', kidAgeMin: 8, kidAgeMax: 14, requiresKids: true },
+    { id: 'national-parks', name: 'National Parks Road Trip', category: 'family', icon: '🏕️', cost: 5000, doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 14, requiresKids: true },
+    { id: 'ski-trip', name: 'Family Ski Trip', category: 'family', icon: '⛷️', cost: 5000, doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 16, requiresKids: true },
 
-  // Initialize
-  function init() {
-    // Load saved data
-    const savedExperiences = loadData(STORAGE_KEYS.experiences, []);
-    children = loadData(STORAGE_KEYS.children, []);
+    { id: 'multigen', name: '3-Generation Trip', category: 'multigen', icon: '👨‍👩‍👧‍👦', cost: 20000, doorType: 'oneway', optimalAgeMin: 35, optimalAgeMax: 55 },
 
-    // Merge custom experiences
-    savedExperiences.forEach(exp => {
-      if (exp.isCustom && !allExperiences.find(e => e.id === exp.id)) {
-        allExperiences.push(exp);
-      }
-    });
+    { id: 'japan', name: 'Japan Deep Dive', category: 'culture', icon: '🗾', cost: 8000, doorType: 'twoway' },
+    { id: 'italy', name: 'Italy Food & Wine Tour', category: 'culture', icon: '🍝', cost: 7000, doorType: 'twoway' },
+    { id: 'peru', name: 'Peru & Machu Picchu', category: 'culture', icon: '🏛️', cost: 6000, doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 65 },
+    { id: 'greece', name: 'Greek Islands', category: 'culture', icon: '🏛️', cost: 6000, doorType: 'twoway' },
 
-    // Mark selected ones
-    selectedExperiences = savedExperiences.map(exp => exp.id);
+    { id: 'cruise', name: 'Caribbean Cruise', category: 'relaxation', icon: '🚢', cost: 5000, doorType: 'twoway' },
+    { id: 'beach-resort', name: 'Beach Resort Week', category: 'relaxation', icon: '🏖️', cost: 4000, doorType: 'twoway' },
 
-    renderCategories();
-    updateSummary();
+    { id: 'retirement-trip', name: 'Retirement Celebration', category: 'milestone', icon: '🎉', cost: 10000, doorType: 'twoway', atRetirement: true },
+    { id: 'anniversary', name: 'Anniversary Trip', category: 'milestone', icon: '💑', cost: 6000, doorType: 'twoway' }
+  ];
+
+  var CATEGORIES = {
+    adventure: { name: 'Adventure', icon: '🏔️' },
+    family: { name: 'Family', icon: '👨‍👩‍👧' },
+    multigen: { name: 'Multi-Generational', icon: '👨‍👩‍👧‍👦' },
+    culture: { name: 'Culture & Travel', icon: '🌍' },
+    relaxation: { name: 'Relaxation', icon: '🏖️' },
+    milestone: { name: 'Milestones', icon: '🎉' }
+  };
+
+  // Helper functions
+  function saveData(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
   }
 
-  // Render categories and experiences
+  function loadData(key, defaultValue) {
+    try {
+      var stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : (defaultValue || null);
+    } catch (e) { return defaultValue || null; }
+  }
+
+  function formatCurrency(amount) {
+    if (amount >= 1000) return '$' + Math.round(amount / 1000) + 'K';
+    return '$' + amount;
+  }
+
+  // DOM elements
+  var categoriesContainer = document.getElementById('experience-categories');
+  var selectedSummary = document.getElementById('selected-summary');
+  var summaryCount = document.getElementById('summary-count');
+  var summaryOneway = document.getElementById('summary-oneway');
+  var summaryCost = document.getElementById('summary-cost');
+  var continueBtn = document.getElementById('continue-btn');
+  var summaryContinueBtn = document.getElementById('summary-continue-btn');
+
+  // State
+  var selectedIds = [];
+  var children = [];
+  var experienceCosts = {};
+
+  // Load data
+  function loadSavedData() {
+    children = loadData(STORAGE_KEYS.children, []);
+    var savedExperiences = loadData(STORAGE_KEYS.experiences, []);
+
+    savedExperiences.forEach(function(exp) {
+      selectedIds.push(exp.id);
+      if (exp.cost) experienceCosts[exp.id] = exp.cost;
+    });
+  }
+
+  // Render categories
   function renderCategories() {
     categoriesContainer.innerHTML = '';
 
-    Object.entries(CATEGORIES).forEach(([categoryId, category]) => {
-      const categoryExperiences = allExperiences.filter(exp => exp.category === categoryId);
-
-      // Skip empty categories
-      if (categoryExperiences.length === 0) return;
-
-      // Filter family experiences if no children
-      const filteredExperiences = categoryExperiences.filter(exp => {
-        if (exp.requiresKids && children.length === 0) {
-          return false;
-        }
+    Object.keys(CATEGORIES).forEach(function(categoryId) {
+      var category = CATEGORIES[categoryId];
+      var categoryExps = EXPERIENCE_TEMPLATES.filter(function(exp) {
+        if (exp.category !== categoryId) return false;
+        if (exp.requiresKids && children.length === 0) return false;
         return true;
       });
 
-      if (filteredExperiences.length === 0) return;
+      if (categoryExps.length === 0) return;
 
-      const selectedCount = filteredExperiences.filter(exp => selectedExperiences.includes(exp.id)).length;
+      var selectedCount = categoryExps.filter(function(exp) {
+        return selectedIds.indexOf(exp.id) !== -1;
+      }).length;
 
-      const section = document.createElement('section');
+      var section = document.createElement('section');
       section.className = 'category-section';
-      section.innerHTML = `
-        <div class="category-header">
-          <span class="category-icon">${category.icon}</span>
-          <span class="category-name">${category.name}</span>
-          <span class="category-count">${selectedCount} of ${filteredExperiences.length}</span>
-        </div>
-        <div class="experience-list" data-category="${categoryId}">
-          ${filteredExperiences.map(exp => renderExperienceCard(exp)).join('')}
-        </div>
-      `;
 
+      var html = '<div class="category-header">' +
+        '<span class="category-icon">' + category.icon + '</span>' +
+        '<span class="category-name">' + category.name + '</span>' +
+        '<span class="category-count">' + selectedCount + ' of ' + categoryExps.length + '</span>' +
+        '</div><div class="experience-list">';
+
+      categoryExps.forEach(function(exp) {
+        var isSelected = selectedIds.indexOf(exp.id) !== -1;
+        var cost = experienceCosts[exp.id] || exp.cost;
+        var doorClass = exp.doorType === 'oneway' ? 'door-oneway' : 'door-twoway';
+        var doorLabel = exp.doorType === 'oneway' ? 'One-Way' : 'Two-Way';
+
+        var meta = '';
+        if (exp.requiresKids) meta = 'Ages ' + exp.kidAgeMin + '-' + exp.kidAgeMax;
+        else if (exp.optimalAgeMin && exp.optimalAgeMax && exp.optimalAgeMax < 100) {
+          meta = 'Best ' + exp.optimalAgeMin + '-' + exp.optimalAgeMax;
+        }
+
+        html += '<div class="experience-card ' + (isSelected ? 'selected' : '') + '" data-id="' + exp.id + '">' +
+          '<div class="experience-checkbox">' + (isSelected ? '✓' : '') + '</div>' +
+          '<div class="experience-info">' +
+          '<div class="experience-name">' + exp.icon + ' ' + exp.name + '</div>' +
+          '<div class="experience-meta">' +
+          '<span class="experience-door ' + doorClass + '">' + doorLabel + '</span>' +
+          (meta ? '<span>' + meta + '</span>' : '') +
+          '</div></div>' +
+          '<input type="number" class="experience-cost-input" value="' + cost + '" data-id="' + exp.id + '" min="0" step="500">' +
+          '</div>';
+      });
+
+      html += '</div>';
+      section.innerHTML = html;
       categoriesContainer.appendChild(section);
     });
 
     // Add click handlers
-    document.querySelectorAll('.experience-card').forEach(card => {
-      card.addEventListener('click', (e) => {
-        // Don't toggle if clicking on cost input
+    var cards = document.querySelectorAll('.experience-card');
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].addEventListener('click', function(e) {
         if (e.target.classList.contains('experience-cost-input')) return;
-
-        const expId = card.dataset.id;
+        var expId = this.getAttribute('data-id');
         toggleExperience(expId);
       });
-    });
-
-    // Add cost input handlers
-    document.querySelectorAll('.experience-cost-input').forEach(input => {
-      input.addEventListener('change', (e) => {
-        const expId = e.target.dataset.id;
-        const newCost = parseFloat(e.target.value) || 0;
-        updateExperienceCost(expId, newCost);
-      });
-
-      input.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    });
-  }
-
-  // Render a single experience card
-  function renderExperienceCard(exp) {
-    const isSelected = selectedExperiences.includes(exp.id);
-    const doorLabel = exp.doorType === 'oneway' ? 'One-Way' : 'Two-Way';
-    const doorClass = exp.doorType === 'oneway' ? 'door-oneway' : 'door-twoway';
-
-    let metaText = '';
-    if (exp.requiresKids) {
-      metaText = `Ages ${exp.kidAgeMin}-${exp.kidAgeMax}`;
-    } else if (exp.optimalAgeMin && exp.optimalAgeMax && exp.optimalAgeMax < 100) {
-      metaText = `Best ${exp.optimalAgeMin}-${exp.optimalAgeMax}`;
     }
 
-    return `
-      <div class="experience-card ${isSelected ? 'selected' : ''}" data-id="${exp.id}">
-        <div class="experience-checkbox">
-          ${isSelected ? '✓' : ''}
-        </div>
-        <div class="experience-info">
-          <div class="experience-name">${exp.icon} ${exp.name}</div>
-          <div class="experience-meta">
-            <span class="experience-door ${doorClass}">${doorLabel}</span>
-            ${metaText ? `<span>${metaText}</span>` : ''}
-          </div>
-        </div>
-        <input type="number" class="experience-cost-input" value="${exp.cost}" data-id="${exp.id}" min="0" step="500">
-      </div>
-    `;
+    // Add cost input handlers
+    var costInputs = document.querySelectorAll('.experience-cost-input');
+    for (var j = 0; j < costInputs.length; j++) {
+      costInputs[j].addEventListener('click', function(e) { e.stopPropagation(); });
+      costInputs[j].addEventListener('change', function(e) {
+        var expId = e.target.getAttribute('data-id');
+        experienceCosts[expId] = parseInt(e.target.value) || 0;
+        updateSummary();
+      });
+    }
   }
 
-  // Toggle experience selection
+  // Toggle experience
   function toggleExperience(expId) {
-    const index = selectedExperiences.indexOf(expId);
-    if (index === -1) {
-      selectedExperiences.push(expId);
+    var idx = selectedIds.indexOf(expId);
+    if (idx === -1) {
+      selectedIds.push(expId);
     } else {
-      selectedExperiences.splice(index, 1);
+      selectedIds.splice(idx, 1);
     }
     renderCategories();
     updateSummary();
-    saveSelections();
   }
 
-  // Update experience cost
-  function updateExperienceCost(expId, newCost) {
-    const exp = allExperiences.find(e => e.id === expId);
-    if (exp) {
-      exp.cost = newCost;
-    }
-    updateSummary();
-    saveSelections();
-  }
-
-  // Update summary bar
+  // Update summary
   function updateSummary() {
-    const selected = allExperiences.filter(exp => selectedExperiences.includes(exp.id));
-    const totalCost = selected.reduce((sum, exp) => sum + exp.cost, 0);
-    const onewayCount = selected.filter(exp => exp.doorType === 'oneway').length;
+    var total = 0;
+    var onewayCount = 0;
 
-    summaryCount.textContent = selected.length;
+    selectedIds.forEach(function(id) {
+      var exp = EXPERIENCE_TEMPLATES.find(function(e) { return e.id === id; });
+      if (exp) {
+        var cost = experienceCosts[id] || exp.cost;
+        total += cost;
+        if (exp.doorType === 'oneway') onewayCount++;
+      }
+    });
+
+    summaryCount.textContent = selectedIds.length;
     summaryOneway.textContent = onewayCount;
-    summaryCost.textContent = formatCurrency(totalCost);
+    summaryCost.textContent = formatCurrency(total);
 
-    // Show/hide summary bar
-    if (selected.length > 0) {
+    if (selectedIds.length > 0) {
       selectedSummary.classList.add('visible');
     } else {
       selectedSummary.classList.remove('visible');
     }
   }
 
-  // Save selections to localStorage
-  function saveSelections() {
-    const experiencesToSave = allExperiences
-      .filter(exp => selectedExperiences.includes(exp.id))
-      .map(exp => ({
-        ...exp,
-        selected: true,
-      }));
+  // Save and continue
+  function saveAndContinue() {
+    var experiencesToSave = selectedIds.map(function(id) {
+      var exp = EXPERIENCE_TEMPLATES.find(function(e) { return e.id === id; });
+      if (!exp) return null;
+      return {
+        id: exp.id,
+        name: exp.name,
+        category: exp.category,
+        icon: exp.icon,
+        cost: experienceCosts[id] || exp.cost,
+        doorType: exp.doorType,
+        optimalAgeMin: exp.optimalAgeMin,
+        optimalAgeMax: exp.optimalAgeMax,
+        kidAgeMin: exp.kidAgeMin,
+        kidAgeMax: exp.kidAgeMax,
+        requiresKids: exp.requiresKids,
+        atRetirement: exp.atRetirement
+      };
+    }).filter(function(e) { return e !== null; });
 
     saveData(STORAGE_KEYS.experiences, experiencesToSave);
+    window.location.href = '/lifemap.html';
   }
 
-  // Custom experience handling
-  toggleCustomBtn.addEventListener('click', () => {
-    customForm.classList.toggle('visible');
-    toggleCustomBtn.style.display = customForm.classList.contains('visible') ? 'none' : 'flex';
-  });
-
-  addCustomBtn.addEventListener('click', () => {
-    const name = document.getElementById('custom-name').value.trim();
-    const cost = parseFloat(document.getElementById('custom-cost').value) || 0;
-    const type = document.getElementById('custom-type').value;
-
-    if (!name) {
-      alert('Please enter an experience name');
-      return;
-    }
-
-    const newExp = {
-      id: 'custom-' + Date.now(),
-      name,
-      category: 'milestone',
-      icon: '✨',
-      cost,
-      doorType: type,
-      optimalAgeMin: 0,
-      optimalAgeMax: 100,
-      isCustom: true,
-    };
-
-    allExperiences.push(newExp);
-    selectedExperiences.push(newExp.id);
-
-    // Reset form
-    document.getElementById('custom-name').value = '';
-    document.getElementById('custom-cost').value = '';
-    customForm.classList.remove('visible');
-    toggleCustomBtn.style.display = 'flex';
-
-    renderCategories();
-    updateSummary();
-    saveSelections();
-  });
-
-  // Continue button
-  continueBtn.addEventListener('click', () => {
-    saveSelections();
-    window.location.href = '/lifemap.html';
-  });
+  // Event listeners
+  continueBtn.addEventListener('click', saveAndContinue);
+  summaryContinueBtn.addEventListener('click', saveAndContinue);
 
   // Initialize
-  init();
+  loadSavedData();
+  renderCategories();
+  updateSummary();
+})();
 </script>
 
 </body>

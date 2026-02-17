@@ -56,27 +56,27 @@
         <div class="form-group">
           <label class="form-label" for="savings">Current Retirement Savings</label>
           <div class="input-prefix">
-            <input type="number" id="savings" class="form-input" placeholder="100,000" min="0" step="1000" required>
+            <input type="number" id="savings" class="form-input" placeholder="100000" min="0" step="1000" required>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="contribution">Monthly Contribution</label>
           <div class="input-prefix">
-            <input type="number" id="contribution" class="form-input" placeholder="1,000" min="0" step="100" required>
+            <input type="number" id="contribution" class="form-input" placeholder="1000" min="0" step="100" required>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="return-rate">Expected Annual Return</label>
           <span class="form-hint">7% is historical average</span>
           <div class="input-suffix" data-suffix="%">
-            <input type="number" id="return-rate" class="form-input" placeholder="7" min="1" max="15" step="0.5">
+            <input type="number" id="return-rate" class="form-input" placeholder="7" min="1" max="15" step="0.5" value="7">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" for="income">Annual Income</label>
           <span class="form-hint">Optional - for benchmarking</span>
           <div class="input-prefix">
-            <input type="number" id="income" class="form-input" placeholder="100,000" min="0" step="5000">
+            <input type="number" id="income" class="form-input" placeholder="100000" min="0" step="5000">
           </div>
         </div>
       </div>
@@ -90,9 +90,7 @@
       <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
         Add your children's ages to see family experience sweet spots — the perfect windows for Disney, road trips, and once-in-a-lifetime adventures together.
       </p>
-      <div class="children-list" id="children-list">
-        <!-- Children will be added here dynamically -->
-      </div>
+      <div class="children-list" id="children-list"></div>
       <button type="button" class="add-child-btn" id="add-child-btn">
         <span>+</span> Add a Child
       </button>
@@ -101,7 +99,7 @@
     <div class="privacy-note">
       <span class="privacy-icon">🔒</span>
       <p class="privacy-text">
-        <strong>Your data never leaves your browser.</strong> All calculations happen locally. No accounts, no tracking, no data collection. We literally can't see your information.
+        <strong>Your data never leaves your browser.</strong> All calculations happen locally. No accounts, no tracking, no data collection.
       </p>
     </div>
 
@@ -115,116 +113,151 @@
   </form>
 </main>
 
-<script src="/js/data.js"></script>
 <script>
-  const { DEFAULTS, STORAGE_KEYS, saveData, loadData } = window.YoloCalc;
+(function() {
+  // Storage keys
+  var STORAGE_KEYS = {
+    financials: 'yolocalc_financials',
+    children: 'yolocalc_children',
+    experiences: 'yolocalc_experiences'
+  };
+
+  // Defaults
+  var DEFAULTS = {
+    age: 35,
+    retirementAge: 65,
+    currentSavings: 100000,
+    monthlyContribution: 1000,
+    annualReturn: 7
+  };
+
+  // Helper functions
+  function saveData(key, data) {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+      console.warn('Could not save:', e);
+    }
+  }
+
+  function loadData(key, defaultValue) {
+    try {
+      var stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : (defaultValue || null);
+    } catch (e) {
+      console.warn('Could not load:', e);
+      return defaultValue || null;
+    }
+  }
 
   // DOM Elements
-  const form = document.getElementById('calculator-form');
-  const childrenList = document.getElementById('children-list');
-  const addChildBtn = document.getElementById('add-child-btn');
+  var form = document.getElementById('calculator-form');
+  var childrenList = document.getElementById('children-list');
+  var addChildBtn = document.getElementById('add-child-btn');
 
   // Form inputs
-  const ageInput = document.getElementById('age');
-  const retirementAgeInput = document.getElementById('retirement-age');
-  const savingsInput = document.getElementById('savings');
-  const contributionInput = document.getElementById('contribution');
-  const returnRateInput = document.getElementById('return-rate');
-  const incomeInput = document.getElementById('income');
+  var ageInput = document.getElementById('age');
+  var retirementAgeInput = document.getElementById('retirement-age');
+  var savingsInput = document.getElementById('savings');
+  var contributionInput = document.getElementById('contribution');
+  var returnRateInput = document.getElementById('return-rate');
+  var incomeInput = document.getElementById('income');
 
   // State
-  let children = [];
-  let childCounter = 0;
-
-  // Initialize
-  function init() {
-    loadSavedData();
-    renderChildren();
-  }
+  var children = [];
+  var childCounter = 0;
 
   // Load saved data
   function loadSavedData() {
-    const savedFinancials = loadData(STORAGE_KEYS.financials);
-    const savedChildren = loadData(STORAGE_KEYS.children, []);
+    var savedFinancials = loadData(STORAGE_KEYS.financials);
+    var savedChildren = loadData(STORAGE_KEYS.children, []);
 
     if (savedFinancials) {
-      ageInput.value = savedFinancials.age || '';
-      retirementAgeInput.value = savedFinancials.retirementAge || '';
-      savingsInput.value = savedFinancials.currentSavings || '';
-      contributionInput.value = savedFinancials.monthlyContribution || '';
-      returnRateInput.value = savedFinancials.annualReturn || '';
-      incomeInput.value = savedFinancials.annualIncome || '';
+      if (savedFinancials.age) ageInput.value = savedFinancials.age;
+      if (savedFinancials.retirementAge) retirementAgeInput.value = savedFinancials.retirementAge;
+      if (savedFinancials.currentSavings) savingsInput.value = savedFinancials.currentSavings;
+      if (savedFinancials.monthlyContribution) contributionInput.value = savedFinancials.monthlyContribution;
+      if (savedFinancials.annualReturn) returnRateInput.value = savedFinancials.annualReturn;
+      if (savedFinancials.annualIncome) incomeInput.value = savedFinancials.annualIncome;
     }
 
-    children = savedChildren.length > 0 ? savedChildren : [];
-    childCounter = children.length;
+    if (savedChildren && savedChildren.length > 0) {
+      children = savedChildren;
+      childCounter = children.length;
+    }
   }
 
   // Render children list
   function renderChildren() {
     childrenList.innerHTML = '';
 
-    children.forEach((child, index) => {
-      const row = document.createElement('div');
+    children.forEach(function(child, index) {
+      var row = document.createElement('div');
       row.className = 'child-row';
-      row.innerHTML = `
-        <span class="child-icon">👶</span>
-        <input type="text" class="child-name-input" placeholder="Child's name" value="${child.name}" data-index="${index}">
-        <input type="number" class="child-age-input" placeholder="Age" min="0" max="30" value="${child.age}" data-index="${index}">
-        <button type="button" class="child-remove" data-index="${index}">×</button>
-      `;
+      row.innerHTML =
+        '<span class="child-icon">👶</span>' +
+        '<input type="text" class="child-name-input" placeholder="Child\'s name" value="' + (child.name || '') + '" data-index="' + index + '">' +
+        '<input type="number" class="child-age-input" placeholder="Age" min="0" max="30" value="' + (child.age || 0) + '" data-index="' + index + '">' +
+        '<button type="button" class="child-remove" data-index="' + index + '">×</button>';
       childrenList.appendChild(row);
     });
 
-    // Add event listeners
-    childrenList.querySelectorAll('.child-name-input').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const index = parseInt(e.target.dataset.index);
-        children[index].name = e.target.value;
+    // Add event listeners for name inputs
+    var nameInputs = childrenList.querySelectorAll('.child-name-input');
+    for (var i = 0; i < nameInputs.length; i++) {
+      nameInputs[i].addEventListener('input', function(e) {
+        var idx = parseInt(e.target.getAttribute('data-index'));
+        children[idx].name = e.target.value;
       });
-    });
+    }
 
-    childrenList.querySelectorAll('.child-age-input').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const index = parseInt(e.target.dataset.index);
-        children[index].age = parseInt(e.target.value) || 0;
+    // Add event listeners for age inputs
+    var ageInputs = childrenList.querySelectorAll('.child-age-input');
+    for (var j = 0; j < ageInputs.length; j++) {
+      ageInputs[j].addEventListener('input', function(e) {
+        var idx = parseInt(e.target.getAttribute('data-index'));
+        children[idx].age = parseInt(e.target.value) || 0;
       });
-    });
+    }
 
-    childrenList.querySelectorAll('.child-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const index = parseInt(e.target.dataset.index);
-        children.splice(index, 1);
+    // Add event listeners for remove buttons
+    var removeButtons = childrenList.querySelectorAll('.child-remove');
+    for (var k = 0; k < removeButtons.length; k++) {
+      removeButtons[k].addEventListener('click', function(e) {
+        var idx = parseInt(e.target.getAttribute('data-index'));
+        children.splice(idx, 1);
         renderChildren();
       });
-    });
+    }
   }
 
-  // Add child
-  addChildBtn.addEventListener('click', () => {
+  // Add child button handler
+  addChildBtn.addEventListener('click', function() {
     childCounter++;
-    children.push({ name: `Child ${childCounter}`, age: 5 });
+    children.push({ name: 'Child ' + childCounter, age: 5 });
     renderChildren();
+
     // Focus the new name input
-    const inputs = childrenList.querySelectorAll('.child-name-input');
+    var inputs = childrenList.querySelectorAll('.child-name-input');
     if (inputs.length > 0) {
-      inputs[inputs.length - 1].focus();
-      inputs[inputs.length - 1].select();
+      var lastInput = inputs[inputs.length - 1];
+      lastInput.focus();
+      lastInput.select();
     }
   });
 
   // Form submission
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', function(e) {
     e.preventDefault();
 
     // Gather financial data
-    const financials = {
+    var financials = {
       age: parseInt(ageInput.value) || DEFAULTS.age,
       retirementAge: parseInt(retirementAgeInput.value) || DEFAULTS.retirementAge,
       currentSavings: parseFloat(savingsInput.value) || DEFAULTS.currentSavings,
       monthlyContribution: parseFloat(contributionInput.value) || DEFAULTS.monthlyContribution,
       annualReturn: parseFloat(returnRateInput.value) || DEFAULTS.annualReturn,
-      annualIncome: parseFloat(incomeInput.value) || 0,
+      annualIncome: parseFloat(incomeInput.value) || 0
     };
 
     // Save to localStorage
@@ -235,8 +268,10 @@
     window.location.href = '/experiences.html';
   });
 
-  // Initialize on load
-  init();
+  // Initialize
+  loadSavedData();
+  renderChildren();
+})();
 </script>
 
 </body>
