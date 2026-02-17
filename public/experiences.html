@@ -39,11 +39,6 @@
       font-size: 1rem;
       text-align: center;
     }
-    .inflation-note {
-      font-size: 0.78rem;
-      color: var(--text-faint);
-      margin-top: 0.75rem;
-    }
     .experience-type-badge {
       font-size: 0.65rem;
       padding: 0.2rem 0.5rem;
@@ -97,14 +92,14 @@
 <main class="app-container" style="padding-bottom: 120px;">
   <header class="screen-header">
     <div class="screen-label">Step 2 of 3</div>
-    <h1 class="screen-title">What experiences matter most?</h1>
-    <p class="screen-subtitle">Choose your annual trip tier for each life phase. Costs are per person.</p>
+    <h1 class="screen-title">What experiences will fill your life?</h1>
+    <p class="screen-subtitle">Choose the adventures that matter most for each chapter of your journey.</p>
   </header>
 
   <section class="travelers-section">
     <div class="form-section-title" style="margin-bottom: 1rem;">
       <span class="form-section-icon">👥</span>
-      Who's Traveling?
+      Who's Coming Along?
     </div>
     <div class="travelers-row">
       <div class="traveler-group">
@@ -115,13 +110,8 @@
         <label class="traveler-label">Children:</label>
         <input type="number" id="children-count" class="traveler-input" value="0" min="0" max="10">
       </div>
-      <div class="traveler-group">
-        <label class="traveler-label">Inflation:</label>
-        <input type="number" id="inflation-rate" class="traveler-input" value="3" min="0" max="10" step="0.5">
-        <span class="traveler-label">%/yr</span>
-      </div>
     </div>
-    <p class="inflation-note">Costs shown are per person in today's dollars. Total family cost and future inflation will be calculated in your Life Map.</p>
+    <input type="hidden" id="inflation-rate" value="3">
   </section>
 
   <div class="experience-categories" id="experience-categories"></div>
@@ -137,19 +127,15 @@
 <div class="selected-summary" id="selected-summary">
   <div class="summary-stats">
     <div class="summary-stat">
-      <span class="summary-stat-label">Selected</span>
+      <span class="summary-stat-label">Adventures Selected</span>
       <span class="summary-stat-value" id="summary-count">0</span>
     </div>
     <div class="summary-stat">
-      <span class="summary-stat-label">One-Way</span>
-      <span class="summary-stat-value sunset" id="summary-oneway">0</span>
-    </div>
-    <div class="summary-stat">
-      <span class="summary-stat-label">Est. Total</span>
-      <span class="summary-stat-value" id="summary-cost">$0</span>
+      <span class="summary-stat-label">Life Phases Covered</span>
+      <span class="summary-stat-value" id="summary-phases">0</span>
     </div>
   </div>
-  <button type="button" class="btn-primary" id="summary-continue-btn">Continue →</button>
+  <button type="button" class="btn-primary" id="summary-continue-btn">See Your Life Map →</button>
 </div>
 
 <script>
@@ -187,10 +173,10 @@
   ];
 
   var CATEGORIES = {
-    prekids: { name: 'Pre-Kids', icon: '💑', description: 'Before children — travel while you can be spontaneous' },
-    family: { name: 'Family Years', icon: '👨‍👩‍👧', description: 'While kids are home — experiences with closing windows' },
-    active: { name: 'Active Empty Nesters', icon: '🥾', description: 'Kids are grown — time for bucket list adventures' },
-    aging: { name: 'Aging', icon: '🌅', description: 'Later years — leisurely travel and comfort' }
+    prekids: { name: 'Pre-Kids', icon: '💑', description: 'Spontaneous adventures while it\'s just the two of you' },
+    family: { name: 'Family Years', icon: '👨‍👩‍👧', description: 'Making memories together while the kids are home' },
+    active: { name: 'Active Empty Nesters', icon: '🥾', description: 'Your bucket list adventures — the freedom to explore' },
+    aging: { name: 'Golden Years', icon: '🌅', description: 'Leisurely journeys and cherished moments' }
   };
 
   function saveData(key, data) {
@@ -214,8 +200,7 @@
   var categoriesContainer = document.getElementById('experience-categories');
   var selectedSummary = document.getElementById('selected-summary');
   var summaryCount = document.getElementById('summary-count');
-  var summaryOneway = document.getElementById('summary-oneway');
-  var summaryCost = document.getElementById('summary-cost');
+  var summaryPhases = document.getElementById('summary-phases');
   var continueBtn = document.getElementById('continue-btn');
   var summaryContinueBtn = document.getElementById('summary-continue-btn');
   var adultsInput = document.getElementById('adults-count');
@@ -281,39 +266,25 @@
       var html = '<div class="category-header">' +
         '<span class="category-icon">' + category.icon + '</span>' +
         '<span class="category-name">' + category.name + '</span>' +
-        '<span class="category-count">' + selectedCount + ' selected</span>' +
+        (selectedCount > 0 ? '<span class="category-count">✓ ' + selectedCount + '</span>' : '') +
         '</div>' +
         '<div class="category-description">' + (category.description || '') + '</div>' +
         '<div class="experience-list">';
 
       categoryExps.forEach(function(exp) {
         var isSelected = selectedIds.indexOf(exp.id) !== -1;
-        var doorClass = exp.doorType === 'oneway' ? 'door-oneway' : 'door-twoway';
-        var doorLabel = exp.doorType === 'oneway' ? 'One-Way' : 'Two-Way';
         var tierClass = 'tier-' + exp.tier;
         var tierLabel = exp.tier.charAt(0).toUpperCase() + exp.tier.slice(1);
-
-        var totalPeople = getTotalTravelers(exp);
-        var totalCost = exp.costPerPerson * totalPeople;
-        if (exp.recurring && exp.recurringYears) {
-          var intervals = exp.recurringInterval || 1;
-          totalCost = totalCost * Math.floor(exp.recurringYears / intervals);
-        }
 
         html += '<div class="experience-card ' + (isSelected ? 'selected' : '') + '" data-id="' + exp.id + '">' +
           '<div class="experience-checkbox">' + (isSelected ? '✓' : '') + '</div>' +
           '<div class="experience-info">' +
           '<div class="experience-name">' + exp.icon + ' ' + exp.name + '</div>' +
-          '<div class="experience-meta">' +
-          '<span class="tier-badge ' + tierClass + '">' + formatCurrency(exp.costPerPerson) + '/person</span>' +
-          '<span class="experience-door ' + doorClass + '">' + doorLabel + '</span>' +
-          (exp.recurring ? '<span class="experience-type-badge recurring">Recurring</span>' : '') +
+          '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">' + exp.description + '</div>' +
+          '<div class="experience-meta" style="margin-top: 0.5rem;">' +
+          '<span class="tier-badge ' + tierClass + '">' + tierLabel + '</span>' +
+          (exp.recurring ? '<span class="experience-type-badge recurring">Annual</span>' : '') +
           '</div>' +
-          '<div style="font-size: 0.75rem; color: var(--text-faint); margin-top: 0.25rem;">' + exp.description + '</div>' +
-          '</div>' +
-          '<div style="text-align: right; min-width: 70px;">' +
-          '<div style="font-size: 0.95rem; font-weight: 600; color: var(--text);">' + formatCurrency(totalCost) + '</div>' +
-          '<div style="font-size: 0.68rem; color: var(--text-faint);">' + totalPeople + ' people' + (exp.recurring ? ' × ' + Math.floor((exp.recurringYears || 1) / (exp.recurringInterval || 1)) + ' trips' : '') + '</div>' +
           '</div>' +
           '</div>';
       });
@@ -347,25 +318,17 @@
   }
 
   function updateSummary() {
-    var totalCost = 0;
-    var onewayCount = 0;
+    var phasesWithSelections = {};
 
     selectedIds.forEach(function(id) {
       var exp = EXPERIENCE_TEMPLATES.find(function(e) { return e.id === id; });
       if (exp) {
-        var people = getTotalTravelers(exp);
-        var cost = exp.costPerPerson * people;
-        if (exp.recurring && exp.recurringYears) {
-          cost = cost * Math.floor((exp.recurringYears || 1) / (exp.recurringInterval || 1));
-        }
-        totalCost += cost;
-        if (exp.doorType === 'oneway') onewayCount++;
+        phasesWithSelections[exp.category] = true;
       }
     });
 
     summaryCount.textContent = selectedIds.length;
-    summaryOneway.textContent = onewayCount;
-    summaryCost.textContent = formatCurrency(totalCost);
+    summaryPhases.textContent = Object.keys(phasesWithSelections).length;
 
     if (selectedIds.length > 0) {
       selectedSummary.classList.add('visible');
@@ -426,10 +389,6 @@
     travelers.children = parseInt(childrenInput.value) || 0;
     renderCategories();
     updateSummary();
-  });
-
-  inflationInput.addEventListener('change', function() {
-    travelers.inflation = parseFloat(inflationInput.value) || 3;
   });
 
   continueBtn.addEventListener('click', saveAndContinue);
