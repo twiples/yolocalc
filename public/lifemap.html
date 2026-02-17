@@ -225,20 +225,75 @@
     return financials.age + 1;
   }
 
+  // Calculate life phase age ranges
+  function getLifePhaseRanges() {
+    var currentAge = financials.age;
+    var phases = {
+      prekids: { start: currentAge, end: currentAge },
+      family: { start: currentAge, end: currentAge },
+      active: { start: currentAge, end: currentAge },
+      aging: { start: currentAge, end: 85 }
+    };
+
+    // Determine phase boundaries based on children
+    var hasKids = children.length > 0 || travelers.children > 0;
+    var youngestKidAge = 0;
+
+    if (children.length > 0) {
+      youngestKidAge = Math.min.apply(null, children.map(function(c) { return c.age; }));
+    }
+
+    if (hasKids) {
+      // Already have kids - no pre-kids phase ahead
+      var yearsUntilEmpty = Math.max(0, 18 - youngestKidAge);
+      phases.family.start = currentAge;
+      phases.family.end = currentAge + yearsUntilEmpty;
+      phases.active.start = phases.family.end;
+      phases.active.end = Math.min(phases.active.start + 15, 75);
+      phases.aging.start = phases.active.end;
+    } else {
+      // No kids yet - assume pre-kids until 35 or 5 years, whichever is later
+      var prekidsEnd = Math.max(currentAge + 5, Math.min(35, currentAge + 10));
+      phases.prekids.start = currentAge;
+      phases.prekids.end = prekidsEnd;
+      // Family phase would start if they have kids - estimate 18 years
+      phases.family.start = prekidsEnd;
+      phases.family.end = prekidsEnd + 18;
+      phases.active.start = phases.family.end;
+      phases.active.end = Math.min(phases.active.start + 15, 75);
+      phases.aging.start = phases.active.end;
+    }
+
+    return phases;
+  }
+
   function scheduleExperiences() {
     scheduledExperiences = [];
     totalExpCost = 0;
+    var phases = getLifePhaseRanges();
 
     experiences.forEach(function(exp) {
       var baseCost = exp.baseCost || (exp.costPerPerson * (exp.totalPeople || 2));
+      var category = exp.category || 'active';
+
+      // Determine phase range for this experience
+      var phaseRange = phases[category] || phases.active;
+      var phaseStart = Math.max(financials.age + 1, phaseRange.start);
+      var phaseEnd = Math.min(phaseRange.end, 85);
 
       if (exp.recurring && exp.recurringYears) {
-        // Schedule multiple instances of recurring experience
+        // Schedule recurring experiences within their life phase
         var interval = exp.recurringInterval || 1;
-        var startAge = financials.age + 1;
-        var endAge = Math.min(financials.age + exp.recurringYears, 85);
+        var yearsInPhase = phaseEnd - phaseStart;
+        var numTrips = Math.min(
+          Math.floor(yearsInPhase / interval) + 1,
+          Math.floor(exp.recurringYears / interval)
+        );
 
-        for (var age = startAge; age <= endAge; age += interval) {
+        for (var i = 0; i < numTrips; i++) {
+          var age = phaseStart + (i * interval);
+          if (age > 85) break;
+
           var yearsFromNow = age - financials.age;
           var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
           totalExpCost += inflatedCost;
@@ -251,13 +306,13 @@
             cost: inflatedCost,
             doorType: exp.doorType,
             scheduledAge: age,
-            recurring: true
+            recurring: true,
+            category: category
           });
         }
       } else {
-        // One-time experience
-        var optimal = getOptimalAge(exp);
-        var scheduledAge = Math.max(financials.age + 1, Math.min(optimal, 85));
+        // One-time experience - schedule at start of phase
+        var scheduledAge = Math.max(financials.age + 1, Math.min(phaseStart, 85));
         var yearsFromNow = scheduledAge - financials.age;
         var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
         totalExpCost += inflatedCost;
@@ -269,9 +324,9 @@
           baseCost: baseCost,
           cost: inflatedCost,
           doorType: exp.doorType,
-          requiresKids: exp.requiresKids,
           scheduledAge: scheduledAge,
-          recurring: false
+          recurring: false,
+          category: category
         });
       }
     });
@@ -440,51 +495,66 @@
 
   function renderInsights() {
     var insights = [];
+    var phases = getLifePhaseRanges();
 
-    // One-way door warnings
-    experiences.forEach(function(exp) {
-      if (exp.doorType === 'oneway' && exp.optimalAgeMax) {
-        var yearsLeft = exp.optimalAgeMax - financials.age;
-        if (yearsLeft > 0 && yearsLeft <= 10) {
-          insights.push({
-            icon: '⏰',
-            text: '<strong>' + exp.name + '</strong>: ' + yearsLeft + ' years in optimal window'
-          });
-        }
+    // Life phase summary
+    var phaseNames = { prekids: 'Pre-Kids', family: 'Family Years', active: 'Active Empty Nesters', aging: 'Aging' };
+    var currentPhase = 'prekids';
+    if (phases.family.start <= financials.age && financials.age < phases.family.end) currentPhase = 'family';
+    else if (phases.active.start <= financials.age && financials.age < phases.active.end) currentPhase = 'active';
+    else if (phases.aging.start <= financials.age) currentPhase = 'aging';
+    else if (phases.prekids.end <= financials.age) currentPhase = 'family';
+
+    insights.push({
+      icon: '📍',
+      text: 'Current phase: <strong>' + phaseNames[currentPhase] + '</strong>'
+    });
+
+    // Family phase window
+    if (currentPhase === 'family' && children.length > 0) {
+      var youngestKidAge = Math.min.apply(null, children.map(function(c) { return c.age; }));
+      var yearsLeft = 18 - youngestKidAge;
+      if (yearsLeft > 0) {
+        insights.push({
+          icon: '👨‍👩‍👧',
+          text: '<strong>' + yearsLeft + ' years</strong> left in Family Years phase'
+        });
       }
-    });
-
-    // Kids windows
-    children.forEach(function(child) {
-      experiences.forEach(function(exp) {
-        if (exp.requiresKids && exp.kidAgeMax) {
-          var yearsLeft = exp.kidAgeMax - child.age;
-          if (yearsLeft > 0 && yearsLeft <= 5) {
-            insights.push({
-              icon: '👶',
-              text: '<strong>' + exp.name + '</strong> with ' + child.name + ': ' + yearsLeft + ' years left'
-            });
-          }
-        }
-      });
-    });
+    }
 
     // Inflation impact
     if (totalExpCost > 0) {
-      var todaysCost = experiences.reduce(function(sum, e) {
-        var base = e.baseCost || (e.costPerPerson * (e.totalPeople || 2));
-        if (e.recurring && e.recurringYears) {
-          return sum + base * Math.floor(e.recurringYears / (e.recurringInterval || 1));
-        }
-        return sum + base;
+      var todaysCost = scheduledExperiences.reduce(function(sum, e) {
+        return sum + e.baseCost;
       }, 0);
       var inflationImpact = totalExpCost - todaysCost;
       if (inflationImpact > 10000) {
         insights.push({
           icon: '📈',
-          text: 'Inflation adds <strong>' + formatCurrency(inflationImpact) + '</strong> to your experience costs over time'
+          text: 'Inflation adds <strong>' + formatCurrency(inflationImpact) + '</strong> over time'
         });
       }
+    }
+
+    // Count trips by phase
+    var tripsByPhase = { prekids: 0, family: 0, active: 0, aging: 0 };
+    scheduledExperiences.forEach(function(exp) {
+      if (exp.category && tripsByPhase[exp.category] !== undefined) {
+        tripsByPhase[exp.category]++;
+      }
+    });
+
+    var tripSummary = Object.keys(tripsByPhase).filter(function(p) {
+      return tripsByPhase[p] > 0;
+    }).map(function(p) {
+      return tripsByPhase[p] + ' ' + phaseNames[p];
+    }).join(', ');
+
+    if (tripSummary) {
+      insights.push({
+        icon: '✈️',
+        text: '<strong>' + scheduledExperiences.length + ' total trips</strong>: ' + tripSummary
+      });
     }
 
     // Balance insight
@@ -501,7 +571,7 @@
     if (endBalance > 200000) {
       insights.push({
         icon: '💡',
-        text: 'You have cushion to spare. Consider retiring earlier or adding more experiences.'
+        text: 'You have cushion to spare. Consider retiring earlier or upgrading trip tiers.'
       });
     } else if (endBalance < 50000 && endBalance > 0) {
       insights.push({

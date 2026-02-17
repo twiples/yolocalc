@@ -64,6 +64,12 @@
     .tier-luxury { background: #fef3c7; color: #b45309; }
     .tier-premium { background: #dbeafe; color: #1d4ed8; }
     .tier-local { background: #dcfce7; color: #15803d; }
+    .category-description {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -92,7 +98,7 @@
   <header class="screen-header">
     <div class="screen-label">Step 2 of 3</div>
     <h1 class="screen-title">What experiences matter most?</h1>
-    <p class="screen-subtitle">Select your adventures. Costs are per person and adjust for inflation.</p>
+    <p class="screen-subtitle">Choose your annual trip tier for each life phase. Costs are per person.</p>
   </header>
 
   <section class="travelers-section">
@@ -155,42 +161,36 @@
     travelers: 'yolocalc_travelers'
   };
 
-  // Simplified experience templates with 3 tiers
+  // Experience templates organized by life phase
   // Costs are PER PERSON in today's dollars
+  // Four phases: Pre-Kids, Family Years, Active Empty Nesters, Aging
   var EXPERIENCE_TEMPLATES = [
-    // One-time adventures (One-Way Doors)
-    { id: 'luxury-intl', name: 'Luxury International Trip', category: 'onetime', icon: '✈️', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 70, recurring: false, description: 'First-class travel, 5-star hotels (Japan, Maldives, Safari)' },
-    { id: 'premium-intl', name: 'Premium International Trip', category: 'onetime', icon: '🌍', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 75, recurring: false, description: 'Europe, South America, Southeast Asia' },
-    { id: 'local-trip', name: 'Domestic/Local Trip', category: 'onetime', icon: '🚗', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: false, description: 'National parks, beach week, ski trip' },
+    // PRE-KIDS: Before having children - adventure and couples travel
+    { id: 'prekids-luxury', name: 'Annual Luxury Trip', category: 'prekids', icon: '✈️', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Maldives, Japan, Safari — while you can travel light' },
+    { id: 'prekids-premium', name: 'Annual Premium Trip', category: 'prekids', icon: '🌍', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Europe, South America, Southeast Asia' },
+    { id: 'prekids-local', name: 'Annual Local Trip', category: 'prekids', icon: '🚗', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Weekend getaways, road trips, ski weekends' },
 
-    // Adventure experiences (One-Way Doors - physically demanding)
-    { id: 'everest', name: 'Everest Base Camp Trek', category: 'adventure', icon: '🏔️', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 50, recurring: false, description: 'Once-in-a-lifetime high altitude trek' },
-    { id: 'patagonia', name: 'Patagonia Adventure', category: 'adventure', icon: '🥾', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 55, recurring: false, description: 'Hiking Torres del Paine' },
-    { id: 'safari', name: 'African Safari', category: 'adventure', icon: '🦁', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', optimalAgeMin: 25, optimalAgeMax: 70, recurring: false, description: 'Kenya, Tanzania, or Botswana' },
-    { id: 'scuba', name: 'Scuba Certification + Trip', category: 'adventure', icon: '🤿', costPerPerson: 5000, tier: 'local', doorType: 'oneway', optimalAgeMin: 18, optimalAgeMax: 55, recurring: false, description: 'Get certified and dive somewhere amazing' },
+    // FAMILY YEARS: Kids at home until age 18
+    { id: 'family-luxury', name: 'Annual Luxury Family Trip', category: 'family', icon: '🏰', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 18, requiresKids: true, description: 'Disney Cruise, Hawaii, international family resorts' },
+    { id: 'family-premium', name: 'Annual Premium Family Trip', category: 'family', icon: '🗼', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', recurring: true, recurringYears: 18, requiresKids: true, description: 'Theme parks, family Europe, beach resorts' },
+    { id: 'family-local', name: 'Annual Local Family Trip', category: 'family', icon: '🏕️', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 18, requiresKids: true, description: 'National parks, camping, domestic beach week' },
 
-    // Family experiences (One-Way - kid age dependent)
-    { id: 'disney', name: 'Disney/Theme Parks', category: 'family', icon: '🏰', costPerPerson: 5000, tier: 'local', doorType: 'oneway', kidAgeMin: 4, kidAgeMax: 12, requiresKids: true, recurring: false, description: 'Magic Kingdom, Universal, etc.' },
-    { id: 'europe-family', name: 'Family Europe Trip', category: 'family', icon: '🗼', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', kidAgeMin: 8, kidAgeMax: 16, requiresKids: true, recurring: false, description: 'Educational travel with kids' },
-    { id: 'national-parks', name: 'National Parks Road Trip', category: 'family', icon: '🏕️', costPerPerson: 5000, tier: 'local', doorType: 'oneway', kidAgeMin: 6, kidAgeMax: 16, requiresKids: true, recurring: false, description: 'Yellowstone, Grand Canyon, Yosemite' },
+    // ACTIVE EMPTY NESTERS: Kids gone, still physically active
+    { id: 'active-luxury', name: 'Annual Luxury Trip', category: 'active', icon: '🦁', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'African safari, Antarctica, luxury adventure' },
+    { id: 'active-premium', name: 'Annual Premium Trip', category: 'active', icon: '🥾', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Patagonia, hiking tours, active adventures' },
+    { id: 'active-local', name: 'Annual Local Trip', category: 'active', icon: '⛷️', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Ski trips, golf getaways, weekend adventures' },
 
-    // Recurring experiences
-    { id: 'annual-beach', name: 'Annual Beach Vacation', category: 'recurring', icon: '🏖️', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 20, description: 'Yearly family beach week' },
-    { id: 'annual-ski', name: 'Annual Ski Trip', category: 'recurring', icon: '⛷️', costPerPerson: 5000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, description: 'Yearly ski vacation' },
-    { id: 'biannual-intl', name: 'International Trip (Every 2 Years)', category: 'recurring', icon: '🌎', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringInterval: 2, recurringYears: 30, description: 'Regular international travel' },
-
-    // Milestone experiences
-    { id: 'retirement-trip', name: 'Retirement Celebration', category: 'milestone', icon: '🎉', costPerPerson: 20000, tier: 'luxury', doorType: 'twoway', atRetirement: true, recurring: false, description: 'The big trip when you retire' },
-    { id: 'anniversary-10', name: '10-Year Anniversary Trip', category: 'milestone', icon: '💑', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: false, adultsOnly: true, description: 'Celebrate a decade together' },
-    { id: 'multigen', name: 'Multi-Generation Family Trip', category: 'milestone', icon: '👨‍👩‍👧‍👦', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', optimalAgeMin: 35, optimalAgeMax: 55, recurring: false, description: '3 generations traveling together' }
+    // AGING: Later years, more leisurely travel
+    { id: 'aging-luxury', name: 'Annual Luxury Trip', category: 'aging', icon: '🚢', costPerPerson: 20000, tier: 'luxury', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Luxury cruises, river cruises, guided tours' },
+    { id: 'aging-premium', name: 'Annual Premium Trip', category: 'aging', icon: '🏝️', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Resort stays, cultural tours, relaxed travel' },
+    { id: 'aging-local', name: 'Annual Local Trip', category: 'aging', icon: '🌸', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Visiting family, domestic getaways, staycations' }
   ];
 
   var CATEGORIES = {
-    onetime: { name: 'Trip Tiers', icon: '✈️' },
-    adventure: { name: 'Adventures', icon: '🏔️' },
-    family: { name: 'Family Experiences', icon: '👨‍👩‍👧' },
-    recurring: { name: 'Recurring Trips', icon: '🔄' },
-    milestone: { name: 'Milestones', icon: '🎉' }
+    prekids: { name: 'Pre-Kids', icon: '💑', description: 'Before children — travel while you can be spontaneous' },
+    family: { name: 'Family Years', icon: '👨‍👩‍👧', description: 'While kids are home — experiences with closing windows' },
+    active: { name: 'Active Empty Nesters', icon: '🥾', description: 'Kids are grown — time for bucket list adventures' },
+    aging: { name: 'Aging', icon: '🌅', description: 'Later years — leisurely travel and comfort' }
   };
 
   function saveData(key, data) {
@@ -278,8 +278,10 @@
       var html = '<div class="category-header">' +
         '<span class="category-icon">' + category.icon + '</span>' +
         '<span class="category-name">' + category.name + '</span>' +
-        '<span class="category-count">' + selectedCount + ' of ' + categoryExps.length + '</span>' +
-        '</div><div class="experience-list">';
+        '<span class="category-count">' + selectedCount + ' selected</span>' +
+        '</div>' +
+        '<div class="category-description">' + (category.description || '') + '</div>' +
+        '<div class="experience-list">';
 
       categoryExps.forEach(function(exp) {
         var isSelected = selectedIds.indexOf(exp.id) !== -1;
