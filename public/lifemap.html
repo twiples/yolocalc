@@ -45,11 +45,6 @@
       <div class="score-sub" id="score-funded-sub">Add experiences</div>
     </div>
     <div class="score-card">
-      <div class="score-label">One-Way Doors</div>
-      <div class="score-value sunset" id="score-oneway">0 of 0</div>
-      <div class="score-sub">Time-sensitive</div>
-    </div>
-    <div class="score-card">
       <div class="score-label">Total Experience Cost</div>
       <div class="score-value sunset" id="score-exp-cost">$0</div>
       <div class="score-sub" id="score-exp-cost-sub">With inflation</div>
@@ -65,7 +60,7 @@
     <div class="timeline-header">
       <span class="timeline-title">Life Timeline</span>
       <div class="timeline-legend">
-        <span class="legend-item"><span class="legend-band"></span> One-Way Door Years</span>
+        <span class="legend-item"><span class="legend-band"></span> Time-sensitive experiences</span>
       </div>
     </div>
     <div class="timeline-chart" id="timeline-chart">
@@ -147,7 +142,6 @@
   // DOM elements
   var scoreFunded = document.getElementById('score-funded');
   var scoreFundedSub = document.getElementById('score-funded-sub');
-  var scoreOneway = document.getElementById('score-oneway');
   var scoreExpCost = document.getElementById('score-exp-cost');
   var scoreExpCostSub = document.getElementById('score-exp-cost-sub');
   var scoreBalance = document.getElementById('score-balance');
@@ -367,15 +361,12 @@
 
   function renderScoreCards() {
     var total = experiences.length;
-    var onewayExp = experiences.filter(function(e) { return e.doorType === 'oneway'; });
     var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
 
     var funded = endBalance > 0 ? total : Math.floor(total * 0.7);
-    var fundedOneway = endBalance > 0 ? onewayExp.length : Math.floor(onewayExp.length * 0.8);
 
     scoreFunded.textContent = funded + ' of ' + total;
     scoreFundedSub.textContent = total > 0 ? Math.round(funded / total * 100) + '% of your dreams' : 'Add experiences';
-    scoreOneway.textContent = fundedOneway + ' of ' + onewayExp.length;
 
     scoreExpCost.textContent = formatCurrency(totalExpCost);
     scoreExpCostSub.textContent = travelers.inflation + '% inflation/yr';
