@@ -646,6 +646,12 @@
   .mta-exp-label { font-size: 0.58rem; font-weight: 500; color: var(--text-muted); margin-top: 5px; white-space: nowrap; }
   .mta-curve { position: absolute; bottom: 47px; left: 1.5rem; right: 1.5rem; height: 120px; pointer-events: none; }
 
+  .mock-exp-strip { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .mock-phase { background: var(--cream); border-radius: 10px; padding: 0.75rem; border: 1px solid var(--warm-border); }
+  .mock-phase-header { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem; }
+  .mock-phase-header span { font-size: 0.85rem; }
+  .mock-phase-icons { font-size: 1rem; display: flex; gap: 0.3rem; }
+
   /* ======================= COMPARISON ======================= */
   .comparison-section { background: var(--white); border-top: 1px solid var(--warm-border); }
   .comparison-lead { max-width: 650px; margin-bottom: 3.5rem; }
@@ -930,7 +936,7 @@
     <div class="preview-header fade-in">
       <div class="label label-sunset">The Output</div>
       <h2 class="heading heading-md">Your money and your life, one screen.</h2>
-      <p>Savings trajectory alongside every planned experience — with one-way doors and kids' sweet spots highlighted so you can plan the life you want.</p>
+      <p>Savings trajectory with experiences organized by life phase. Memory dividends show the value of doing things sooner. Die With Zero mode helps you optimize for living, not hoarding.</p>
     </div>
     <div class="product-mock fade-in">
       <div class="mock-topbar">
@@ -944,14 +950,14 @@
             <div class="msc-sub">85% of your dreams</div>
           </div>
           <div class="mock-score-card">
-            <div class="msc-label">One-Way Doors</div>
-            <div class="msc-value v-sunset">6 of 7</div>
-            <div class="msc-sub">Time-sensitive covered</div>
+            <div class="msc-label">Total Cost</div>
+            <div class="msc-value v-sunset">$380K</div>
+            <div class="msc-sub">3% inflation/yr</div>
           </div>
           <div class="mock-score-card">
-            <div class="msc-label">Kids' Windows</div>
-            <div class="msc-value v-sunset">3 of 4</div>
-            <div class="msc-sub">Family trips planned</div>
+            <div class="msc-label">Memory Dividends</div>
+            <div class="msc-value v-green">847</div>
+            <div class="msc-sub">Years of memories</div>
           </div>
           <div class="mock-score-card">
             <div class="msc-label">Balance at 85</div>
@@ -974,23 +980,25 @@
             </svg>
           </div>
           <div class="mta-track"></div>
-          <div class="mta-zone mtz-peak"></div>
-          <div class="mta-zone mtz-active"></div>
-          <div class="mta-zone mtz-comfort"></div>
-          <div class="mta-zone mtz-home"></div>
-          <div class="mta-exp" style="left: 8%"><div class="mta-exp-dot ow">🏰</div><div class="mta-exp-label">Disney w/ kids</div></div>
-          <div class="mta-exp" style="left: 16%"><div class="mta-exp-dot ow">🎒</div><div class="mta-exp-label">SE Asia</div></div>
-          <div class="mta-exp" style="left: 24%"><div class="mta-exp-dot ow">👨‍👩‍👧‍👦</div><div class="mta-exp-label">Family Europe</div></div>
-          <div class="mta-exp" style="left: 34%"><div class="mta-exp-dot ow">🏔</div><div class="mta-exp-label">Everest BC</div></div>
-          <div class="mta-exp" style="left: 44%"><div class="mta-exp-dot ow">🚗</div><div class="mta-exp-label">Teen roadtrip</div></div>
-          <div class="mta-exp" style="left: 56%"><div class="mta-exp-dot tw">🗼</div><div class="mta-exp-label">Japan</div></div>
-          <div class="mta-exp" style="left: 68%"><div class="mta-exp-dot tw">✈️</div><div class="mta-exp-label">Retire trip</div></div>
-          <div class="mta-exp" style="left: 82%"><div class="mta-exp-dot tw">🚢</div><div class="mta-exp-label">Cruise</div></div>
           <div class="mta-age-marker" style="left: 5%">35</div>
           <div class="mta-age-marker" style="left: 25%">45</div>
           <div class="mta-age-marker" style="left: 53%">60</div>
           <div class="mta-age-marker" style="left: 78%">75</div>
           <div class="mta-age-marker" style="left: 95%">85</div>
+        </div>
+        <div class="mock-exp-strip">
+          <div class="mock-phase" style="width: 30%;">
+            <div class="mock-phase-header"><span>👨‍👩‍👧</span> Family</div>
+            <div class="mock-phase-icons">🏰 🗼 🏕️</div>
+          </div>
+          <div class="mock-phase" style="width: 40%;">
+            <div class="mock-phase-header"><span>🥾</span> Empty Nesters</div>
+            <div class="mock-phase-icons">🦁 🥾 ⛷️</div>
+          </div>
+          <div class="mock-phase" style="width: 30%;">
+            <div class="mock-phase-header"><span>🌅</span> Aging</div>
+            <div class="mock-phase-icons">🚢 🏝️ 🌸</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1008,11 +1016,11 @@
       <thead><tr><th></th><th>Traditional Calculators</th><th>YoloCalc</th></tr></thead>
       <tbody>
         <tr><td>Primary question</td><td class="col-others">"How much do you need?"</td><td class="col-yolo">"What experiences will make your life extraordinary?"</td></tr>
-        <tr><td>Output</td><td class="col-others">A single dollar figure</td><td class="col-yolo">Visual life map with money + experiences</td></tr>
-        <tr><td>Spending model</td><td class="col-others">Identical annual line items</td><td class="col-yolo">One-way doors (time-sensitive) vs. two-way doors (flexible)</td></tr>
-        <tr><td>Kids' ages</td><td class="col-others">Not considered</td><td class="col-yolo">Maps family experience sweet spots by age</td></tr>
-        <tr><td>Physical ability</td><td class="col-others">Never modeled</td><td class="col-yolo">Maps optimal timing for age-dependent experiences</td></tr>
-        <tr><td>Emotional tone</td><td class="col-others">"You're behind. Save more."</td><td class="col-yolo">"Here's the life you can have."</td></tr>
+        <tr><td>Output</td><td class="col-others">A single dollar figure</td><td class="col-yolo">Visual life map with experiences by life phase</td></tr>
+        <tr><td>Life phases</td><td class="col-others">Not considered</td><td class="col-yolo">Family, Empty Nesters, Aging — each with its own trips</td></tr>
+        <tr><td>Memory value</td><td class="col-others">Never modeled</td><td class="col-yolo">Memory dividends: earlier trips = more years of joy</td></tr>
+        <tr><td>Spending philosophy</td><td class="col-others">"Save as much as possible"</td><td class="col-yolo">Die With Zero mode: optimize for living, not hoarding</td></tr>
+        <tr><td>Unused money</td><td class="col-others">Shows as "cushion"</td><td class="col-yolo">Shows as experiences, charity, or time you could've bought back</td></tr>
         <tr><td>Your data</td><td class="col-others">Requires account, may sell data</td><td class="col-yolo">Never leaves your browser</td></tr>
       </tbody>
     </table>
