@@ -97,7 +97,7 @@
         <div class="dwz-stat">
           <div class="dwz-stat-label">Unused at 85</div>
           <div class="dwz-stat-value" id="dwz-unused">$0</div>
-          <div class="dwz-stat-sub">Money you worked for but never used</div>
+          <div class="dwz-stat-sub">In today's dollars</div>
         </div>
         <div class="dwz-stat">
           <div class="dwz-stat-label">Experiences Left Behind</div>
@@ -622,11 +622,16 @@
   function renderDieWithZero() {
     var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
 
-    // Calculate unused money and convert to experiences
-    var avgTripCost = 10000 * (travelers.adults + travelers.children); // Premium trip
-    var unusedExperiences = Math.floor(endBalance / avgTripCost);
+    // Deflate future balance to today's dollars for fair comparison
+    var yearsToEnd = 85 - financials.age;
+    var inflationRate = travelers.inflation / 100;
+    var presentValueBalance = endBalance / Math.pow(1 + inflationRate, yearsToEnd);
 
-    dwzUnused.textContent = formatCurrency(endBalance);
+    // Calculate unused money and convert to experiences (all in today's dollars)
+    var avgTripCost = 10000 * (travelers.adults + travelers.children); // Premium trip in today's $
+    var unusedExperiences = Math.floor(presentValueBalance / avgTripCost);
+
+    dwzUnused.textContent = formatCurrency(presentValueBalance);
     dwzExperiences.textContent = unusedExperiences;
 
     if (unusedExperiences === 1) {
@@ -635,12 +640,12 @@
       dwzExperiencesSub.textContent = 'Premium trips you could have taken';
     }
 
-    // Generate suggestions
+    // Generate suggestions (all in today's dollars)
     var suggestions = [];
 
-    if (endBalance > 100000) {
+    if (presentValueBalance > 100000) {
       // Calculate how much earlier they could retire
-      var yearsEarlier = Math.floor(endBalance / (financials.monthlyContribution * 12 + 50000));
+      var yearsEarlier = Math.floor(presentValueBalance / (financials.monthlyContribution * 12 + 50000));
       if (yearsEarlier > 0 && financials.retirementAge - yearsEarlier >= 55) {
         suggestions.push({
           icon: '🏖️',
@@ -650,7 +655,7 @@
       }
 
       // Upgrade trips suggestion
-      var upgradeCount = Math.floor(endBalance / 10000);
+      var upgradeCount = Math.floor(presentValueBalance / 10000);
       suggestions.push({
         icon: '✈️',
         title: 'Upgrade ' + Math.min(upgradeCount, 10) + ' trips to luxury',
@@ -658,7 +663,7 @@
       });
     }
 
-    if (endBalance > 50000) {
+    if (presentValueBalance > 50000) {
       // Add more experiences
       suggestions.push({
         icon: '🌍',
@@ -668,7 +673,7 @@
 
       // Give with warm hand
       if (children.length > 0 || travelers.children > 0) {
-        var giftPerKid = Math.floor(endBalance / Math.max(1, children.length || travelers.children) / 2);
+        var giftPerKid = Math.floor(presentValueBalance / Math.max(1, children.length || travelers.children) / 2);
         suggestions.push({
           icon: '🎁',
           title: 'Give $' + Math.round(giftPerKid / 1000) + 'K to each child now',
@@ -677,9 +682,9 @@
       }
     }
 
-    if (endBalance > 200000) {
+    if (presentValueBalance > 200000) {
       // Reduce monthly savings
-      var excessMonthly = Math.floor((endBalance - 50000) / ((85 - financials.age) * 12));
+      var excessMonthly = Math.floor((presentValueBalance - 50000) / ((85 - financials.age) * 12));
       suggestions.push({
         icon: '💰',
         title: 'Save $' + Math.round(excessMonthly) + ' less per month',
