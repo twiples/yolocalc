@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator | YoloCalc</title>
+  <meta name="description" content="Start planning your experience-first retirement. Enter your financial details.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo"><span class="nav-logo-dot"></span> YoloCalc</a>
+  <div class="nav-progress">
+    <a href="/calculator.html" class="nav-step active">
+      <span class="nav-step-num">1</span>
+      <span>Finances</span>
+    </a>
+    <div class="nav-connector"></div>
+    <a href="/experiences.html" class="nav-step">
+      <span class="nav-step-num">2</span>
+      <span>Experiences</span>
+    </a>
+    <div class="nav-connector"></div>
+    <a href="/lifemap.html" class="nav-step">
+      <span class="nav-step-num">3</span>
+      <span>Life Map</span>
+    </a>
+  </div>
+</nav>
+
+<main class="app-container">
+  <header class="screen-header">
+    <div class="screen-label">Step 1 of 3</div>
+    <h1 class="screen-title">Tell us about your finances</h1>
+    <p class="screen-subtitle">Six fields. Smart defaults. Your data never leaves your browser.</p>
+  </header>
+
+  <form id="calculator-form">
+    <section class="form-section">
+      <div class="form-section-title">
+        <span class="form-section-icon">📊</span>
+        Your Numbers
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="age">Current Age</label>
+          <input type="number" id="age" class="form-input" placeholder="35" min="18" max="80" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="retirement-age">Target Retirement Age</label>
+          <input type="number" id="retirement-age" class="form-input" placeholder="65" min="40" max="90" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="savings">Current Retirement Savings</label>
+          <div class="input-prefix">
+            <input type="number" id="savings" class="form-input" placeholder="100,000" min="0" step="1000" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="contribution">Monthly Contribution</label>
+          <div class="input-prefix">
+            <input type="number" id="contribution" class="form-input" placeholder="1,000" min="0" step="100" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="return-rate">Expected Annual Return</label>
+          <span class="form-hint">7% is historical average</span>
+          <div class="input-suffix" data-suffix="%">
+            <input type="number" id="return-rate" class="form-input" placeholder="7" min="1" max="15" step="0.5">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="income">Annual Income</label>
+          <span class="form-hint">Optional - for benchmarking</span>
+          <div class="input-prefix">
+            <input type="number" id="income" class="form-input" placeholder="100,000" min="0" step="5000">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-title">
+        <span class="form-section-icon">👨‍👩‍👧</span>
+        Children (Optional)
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+        Add your children's ages to see family experience sweet spots — the perfect windows for Disney, road trips, and once-in-a-lifetime adventures together.
+      </p>
+      <div class="children-list" id="children-list">
+        <!-- Children will be added here dynamically -->
+      </div>
+      <button type="button" class="add-child-btn" id="add-child-btn">
+        <span>+</span> Add a Child
+      </button>
+    </section>
+
+    <div class="privacy-note">
+      <span class="privacy-icon">🔒</span>
+      <p class="privacy-text">
+        <strong>Your data never leaves your browser.</strong> All calculations happen locally. No accounts, no tracking, no data collection. We literally can't see your information.
+      </p>
+    </div>
+
+    <div class="btn-row">
+      <a href="/" class="btn-secondary">← Back to Home</a>
+      <button type="submit" class="btn-primary">
+        Continue to Experiences
+        <span>→</span>
+      </button>
+    </div>
+  </form>
+</main>
+
+<script src="/js/data.js"></script>
+<script>
+  const { DEFAULTS, STORAGE_KEYS, saveData, loadData } = window.YoloCalc;
+
+  // DOM Elements
+  const form = document.getElementById('calculator-form');
+  const childrenList = document.getElementById('children-list');
+  const addChildBtn = document.getElementById('add-child-btn');
+
+  // Form inputs
+  const ageInput = document.getElementById('age');
+  const retirementAgeInput = document.getElementById('retirement-age');
+  const savingsInput = document.getElementById('savings');
+  const contributionInput = document.getElementById('contribution');
+  const returnRateInput = document.getElementById('return-rate');
+  const incomeInput = document.getElementById('income');
+
+  // State
+  let children = [];
+  let childCounter = 0;
+
+  // Initialize
+  function init() {
+    loadSavedData();
+    renderChildren();
+  }
+
+  // Load saved data
+  function loadSavedData() {
+    const savedFinancials = loadData(STORAGE_KEYS.financials);
+    const savedChildren = loadData(STORAGE_KEYS.children, []);
+
+    if (savedFinancials) {
+      ageInput.value = savedFinancials.age || '';
+      retirementAgeInput.value = savedFinancials.retirementAge || '';
+      savingsInput.value = savedFinancials.currentSavings || '';
+      contributionInput.value = savedFinancials.monthlyContribution || '';
+      returnRateInput.value = savedFinancials.annualReturn || '';
+      incomeInput.value = savedFinancials.annualIncome || '';
+    }
+
+    children = savedChildren.length > 0 ? savedChildren : [];
+    childCounter = children.length;
+  }
+
+  // Render children list
+  function renderChildren() {
+    childrenList.innerHTML = '';
+
+    children.forEach((child, index) => {
+      const row = document.createElement('div');
+      row.className = 'child-row';
+      row.innerHTML = `
+        <span class="child-icon">👶</span>
+        <input type="text" class="child-name-input" placeholder="Child's name" value="${child.name}" data-index="${index}">
+        <input type="number" class="child-age-input" placeholder="Age" min="0" max="30" value="${child.age}" data-index="${index}">
+        <button type="button" class="child-remove" data-index="${index}">×</button>
+      `;
+      childrenList.appendChild(row);
+    });
+
+    // Add event listeners
+    childrenList.querySelectorAll('.child-name-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        children[index].name = e.target.value;
+      });
+    });
+
+    childrenList.querySelectorAll('.child-age-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        children[index].age = parseInt(e.target.value) || 0;
+      });
+    });
+
+    childrenList.querySelectorAll('.child-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        children.splice(index, 1);
+        renderChildren();
+      });
+    });
+  }
+
+  // Add child
+  addChildBtn.addEventListener('click', () => {
+    childCounter++;
+    children.push({ name: `Child ${childCounter}`, age: 5 });
+    renderChildren();
+    // Focus the new name input
+    const inputs = childrenList.querySelectorAll('.child-name-input');
+    if (inputs.length > 0) {
+      inputs[inputs.length - 1].focus();
+      inputs[inputs.length - 1].select();
+    }
+  });
+
+  // Form submission
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Gather financial data
+    const financials = {
+      age: parseInt(ageInput.value) || DEFAULTS.age,
+      retirementAge: parseInt(retirementAgeInput.value) || DEFAULTS.retirementAge,
+      currentSavings: parseFloat(savingsInput.value) || DEFAULTS.currentSavings,
+      monthlyContribution: parseFloat(contributionInput.value) || DEFAULTS.monthlyContribution,
+      annualReturn: parseFloat(returnRateInput.value) || DEFAULTS.annualReturn,
+      annualIncome: parseFloat(incomeInput.value) || 0,
+    };
+
+    // Save to localStorage
+    saveData(STORAGE_KEYS.financials, financials);
+    saveData(STORAGE_KEYS.children, children);
+
+    // Navigate to experiences
+    window.location.href = '/experiences.html';
+  });
+
+  // Initialize on load
+  init();
+</script>
+
+</body>
+</html>

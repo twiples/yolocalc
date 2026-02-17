@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Life Map | YoloCalc</title>
+  <meta name="description" content="Your complete life map - experiences and finances visualized together.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo"><span class="nav-logo-dot"></span> YoloCalc</a>
+  <div class="nav-progress">
+    <a href="/calculator.html" class="nav-step completed">
+      <span class="nav-step-num">✓</span>
+      <span>Finances</span>
+    </a>
+    <div class="nav-connector"></div>
+    <a href="/experiences.html" class="nav-step completed">
+      <span class="nav-step-num">✓</span>
+      <span>Experiences</span>
+    </a>
+    <div class="nav-connector"></div>
+    <a href="/lifemap.html" class="nav-step active">
+      <span class="nav-step-num">3</span>
+      <span>Life Map</span>
+    </a>
+  </div>
+</nav>
+
+<main class="app-container lifemap-container">
+  <header class="screen-header">
+    <div class="screen-label">Your Life Map</div>
+    <h1 class="screen-title">Here's the life you can live</h1>
+    <p class="screen-subtitle">Your money and your experiences, mapped together. Drag sliders to explore what's possible.</p>
+  </header>
+
+  <!-- Score Cards -->
+  <div class="score-grid" id="score-grid">
+    <div class="score-card">
+      <div class="score-label">Experiences Funded</div>
+      <div class="score-value green" id="score-funded">0 of 0</div>
+      <div class="score-sub" id="score-funded-sub">0% of your dreams</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">One-Way Doors</div>
+      <div class="score-value sunset" id="score-oneway">0 of 0</div>
+      <div class="score-sub">Time-sensitive captured</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Kids' Windows</div>
+      <div class="score-value sunset" id="score-kids">0 of 0</div>
+      <div class="score-sub">Family trips planned</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Balance at 85</div>
+      <div class="score-value default" id="score-balance">$0</div>
+      <div class="score-sub" id="score-balance-sub">Your cushion</div>
+    </div>
+  </div>
+
+  <!-- Timeline Chart -->
+  <div class="timeline-container">
+    <div class="timeline-header">
+      <span class="timeline-title">Life Timeline</span>
+      <div class="timeline-legend">
+        <span class="legend-item"><span class="legend-dot oneway"></span> One-Way Door</span>
+        <span class="legend-item"><span class="legend-dot twoway"></span> Two-Way Door</span>
+      </div>
+    </div>
+    <div class="timeline-chart" id="timeline-chart">
+      <div class="timeline-yaxis" id="timeline-yaxis">
+        <!-- Y-axis labels will be rendered here -->
+      </div>
+      <svg class="timeline-svg" id="timeline-svg" preserveAspectRatio="none">
+        <!-- Chart will be rendered here -->
+      </svg>
+      <div class="experience-markers" id="experience-markers">
+        <!-- Experience markers will be rendered here -->
+      </div>
+      <div class="timeline-axis" id="timeline-axis">
+        <!-- X-axis labels will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="insights-section" id="insights-section">
+    <div class="insights-title">Insights</div>
+    <div class="insight-list" id="insight-list">
+      <!-- Insights will be rendered here -->
+    </div>
+  </div>
+
+  <!-- What-If Sliders -->
+  <div class="sliders-section">
+    <div class="sliders-title">What If...?</div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">Retire at age</span>
+        <span class="slider-value" id="retire-slider-value">65</span>
+      </div>
+      <input type="range" class="slider-input" id="retire-slider" min="55" max="75" value="65">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">Monthly contribution</span>
+        <span class="slider-value" id="contribution-slider-value">$1,000</span>
+      </div>
+      <input type="range" class="slider-input" id="contribution-slider" min="0" max="5000" step="100" value="1000">
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top: 2rem;">
+    <a href="/experiences.html" class="btn-secondary">← Edit Experiences</a>
+    <a href="/calculator.html" class="btn-secondary">Edit Finances</a>
+  </div>
+</main>
+
+<script src="/js/data.js"></script>
+<script>
+  const {
+    STORAGE_KEYS,
+    DEFAULTS,
+    loadData,
+    formatCurrency,
+    formatCurrencyFull,
+    calculateFutureValue,
+    getOptimalAge,
+    getWindowStatus,
+  } = window.YoloCalc;
+
+  // State
+  let financials = {};
+  let children = [];
+  let experiences = [];
+  let scheduledExperiences = [];
+
+  // DOM elements
+  const scoreFunded = document.getElementById('score-funded');
+  const scoreFundedSub = document.getElementById('score-funded-sub');
+  const scoreOneway = document.getElementById('score-oneway');
+  const scoreKids = document.getElementById('score-kids');
+  const scoreBalance = document.getElementById('score-balance');
+  const scoreBalanceSub = document.getElementById('score-balance-sub');
+  const timelineSvg = document.getElementById('timeline-svg');
+  const timelineAxis = document.getElementById('timeline-axis');
+  const timelineYaxis = document.getElementById('timeline-yaxis');
+  const experienceMarkers = document.getElementById('experience-markers');
+  const insightList = document.getElementById('insight-list');
+  const retireSlider = document.getElementById('retire-slider');
+  const retireSliderValue = document.getElementById('retire-slider-value');
+  const contributionSlider = document.getElementById('contribution-slider');
+  const contributionSliderValue = document.getElementById('contribution-slider-value');
+
+  // Initialize
+  function init() {
+    loadDataFromStorage();
+    setupSliders();
+    calculateAndRender();
+  }
+
+  // Load data
+  function loadDataFromStorage() {
+    financials = loadData(STORAGE_KEYS.financials, DEFAULTS);
+    children = loadData(STORAGE_KEYS.children, []);
+    experiences = loadData(STORAGE_KEYS.experiences, []);
+
+    // Set slider values
+    retireSlider.value = financials.retirementAge || 65;
+    contributionSlider.value = financials.monthlyContribution || 1000;
+  }
+
+  // Setup sliders
+  function setupSliders() {
+    retireSlider.addEventListener('input', (e) => {
+      financials.retirementAge = parseInt(e.target.value);
+      retireSliderValue.textContent = e.target.value;
+      calculateAndRender();
+    });
+
+    contributionSlider.addEventListener('input', (e) => {
+      financials.monthlyContribution = parseInt(e.target.value);
+      contributionSliderValue.textContent = formatCurrency(parseInt(e.target.value));
+      calculateAndRender();
+    });
+
+    // Set initial values
+    retireSliderValue.textContent = retireSlider.value;
+    contributionSliderValue.textContent = formatCurrency(parseInt(contributionSlider.value));
+  }
+
+  // Main calculation and rendering
+  function calculateAndRender() {
+    scheduleExperiences();
+    calculateTrajectory();
+    renderScoreCards();
+    renderTimeline();
+    renderInsights();
+  }
+
+  // Schedule experiences at optimal times
+  function scheduleExperiences() {
+    scheduledExperiences = experiences.map(exp => {
+      const optimalAge = getOptimalAge(exp, financials, children);
+      return {
+        ...exp,
+        scheduledAge: Math.max(financials.age + 1, Math.min(optimalAge, 85)),
+      };
+    });
+
+    // Sort by scheduled age
+    scheduledExperiences.sort((a, b) => a.scheduledAge - b.scheduledAge);
+  }
+
+  // Calculate portfolio trajectory
+  function calculateTrajectory() {
+    const startAge = financials.age;
+    const endAge = 85;
+    const trajectory = [];
+
+    let currentValue = financials.currentSavings;
+    const monthlyReturn = (financials.annualReturn || 7) / 100 / 12;
+
+    for (let age = startAge; age <= endAge; age++) {
+      // Find expenses this year
+      const expensesThisYear = scheduledExperiences
+        .filter(exp => Math.floor(exp.scheduledAge) === age)
+        .reduce((sum, exp) => sum + exp.cost, 0);
+
+      if (age < financials.retirementAge) {
+        // Accumulation phase
+        for (let month = 0; month < 12; month++) {
+          currentValue = currentValue * (1 + monthlyReturn) + financials.monthlyContribution;
+        }
+      } else {
+        // Retirement phase - 4% withdrawal
+        const annualWithdrawal = currentValue * 0.04;
+        currentValue = currentValue * (1 + (financials.annualReturn || 7) / 100) - annualWithdrawal;
+      }
+
+      currentValue -= expensesThisYear;
+      currentValue = Math.max(0, currentValue);
+
+      trajectory.push({ age, value: currentValue });
+    }
+
+    // Store for later use
+    window.trajectory = trajectory;
+  }
+
+  // Render score cards
+  function renderScoreCards() {
+    const totalExp = experiences.length;
+    const onewayExp = experiences.filter(e => e.doorType === 'oneway');
+    const kidsExp = experiences.filter(e => e.requiresKids);
+
+    // Calculate which are funded (simplified: assume all funded if end balance > 0)
+    const endBalance = window.trajectory[window.trajectory.length - 1]?.value || 0;
+    const funded = endBalance > 0 ? totalExp : Math.floor(totalExp * 0.7);
+    const fundedOneway = endBalance > 0 ? onewayExp.length : Math.floor(onewayExp.length * 0.8);
+    const fundedKids = endBalance > 0 ? kidsExp.length : Math.floor(kidsExp.length * 0.8);
+
+    scoreFunded.textContent = `${funded} of ${totalExp}`;
+    scoreFundedSub.textContent = totalExp > 0 ? `${Math.round(funded / totalExp * 100)}% of your dreams` : 'Add experiences';
+
+    scoreOneway.textContent = `${fundedOneway} of ${onewayExp.length}`;
+    scoreKids.textContent = `${fundedKids} of ${kidsExp.length}`;
+
+    scoreBalance.textContent = formatCurrency(endBalance);
+    scoreBalanceSub.textContent = endBalance > 100000 ? 'Comfortable cushion' : endBalance > 0 ? 'Tight but possible' : 'Needs adjustment';
+  }
+
+  // Render timeline chart
+  function renderTimeline() {
+    const trajectory = window.trajectory || [];
+    if (trajectory.length === 0) return;
+
+    const startAge = financials.age;
+    const endAge = 85;
+    const maxValue = Math.max(...trajectory.map(t => t.value)) * 1.1;
+
+    // Chart dimensions
+    const width = timelineSvg.clientWidth || 800;
+    const height = timelineSvg.clientHeight || 280;
+    const padding = { left: 60, right: 20, top: 20, bottom: 40 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Clear previous
+    timelineSvg.innerHTML = '';
+
+    // Create path
+    const points = trajectory.map((t, i) => {
+      const x = padding.left + (i / (trajectory.length - 1)) * chartWidth;
+      const y = padding.top + chartHeight - (t.value / maxValue) * chartHeight;
+      return `${x},${y}`;
+    });
+
+    // Gradient
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#e07c3e" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#e07c3e" stop-opacity="0"/>
+      </linearGradient>
+    `;
+    timelineSvg.appendChild(defs);
+
+    // Area fill
+    const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const areaD = `M${padding.left},${padding.top + chartHeight} L${points.join(' L')} L${padding.left + chartWidth},${padding.top + chartHeight} Z`;
+    areaPath.setAttribute('d', areaD);
+    areaPath.setAttribute('fill', 'url(#areaGradient)');
+    timelineSvg.appendChild(areaPath);
+
+    // Line
+    const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    linePath.setAttribute('d', `M${points.join(' L')}`);
+    linePath.setAttribute('stroke', '#e07c3e');
+    linePath.setAttribute('stroke-width', '2');
+    linePath.setAttribute('fill', 'none');
+    timelineSvg.appendChild(linePath);
+
+    // Retirement line
+    const retireIndex = financials.retirementAge - startAge;
+    if (retireIndex > 0 && retireIndex < trajectory.length) {
+      const retireX = padding.left + (retireIndex / (trajectory.length - 1)) * chartWidth;
+      const retireLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      retireLine.setAttribute('x1', retireX);
+      retireLine.setAttribute('y1', padding.top);
+      retireLine.setAttribute('x2', retireX);
+      retireLine.setAttribute('y2', padding.top + chartHeight);
+      retireLine.setAttribute('stroke', '#0097b2');
+      retireLine.setAttribute('stroke-width', '1');
+      retireLine.setAttribute('stroke-dasharray', '4,4');
+      retireLine.setAttribute('opacity', '0.5');
+      timelineSvg.appendChild(retireLine);
+    }
+
+    // X-axis labels
+    timelineAxis.innerHTML = '';
+    const ageLabels = [startAge, startAge + 10, startAge + 20, startAge + 30, endAge];
+    ageLabels.forEach(age => {
+      if (age > endAge) return;
+      const pct = ((age - startAge) / (endAge - startAge)) * 100;
+      const label = document.createElement('span');
+      label.className = 'axis-label';
+      label.textContent = age;
+      label.style.position = 'absolute';
+      label.style.left = `${pct}%`;
+      label.style.transform = 'translateX(-50%)';
+      timelineAxis.appendChild(label);
+    });
+
+    // Y-axis labels
+    timelineYaxis.innerHTML = '';
+    const yLabels = [0, maxValue * 0.5, maxValue];
+    yLabels.reverse().forEach((val, i) => {
+      const label = document.createElement('span');
+      label.className = 'yaxis-label';
+      label.textContent = formatCurrency(val);
+      timelineYaxis.appendChild(label);
+    });
+
+    // Experience markers
+    renderExperienceMarkers(trajectory, chartWidth, chartHeight, padding, maxValue, startAge, endAge);
+  }
+
+  // Render experience markers
+  function renderExperienceMarkers(trajectory, chartWidth, chartHeight, padding, maxValue, startAge, endAge) {
+    experienceMarkers.innerHTML = '';
+
+    scheduledExperiences.forEach(exp => {
+      const ageIndex = Math.floor(exp.scheduledAge) - startAge;
+      if (ageIndex < 0 || ageIndex >= trajectory.length) return;
+
+      const pct = ((exp.scheduledAge - startAge) / (endAge - startAge)) * 100;
+      const yValue = trajectory[ageIndex]?.value || 0;
+      const yPct = (1 - yValue / maxValue) * 100;
+
+      const marker = document.createElement('div');
+      marker.className = 'exp-marker';
+      marker.style.left = `${pct}%`;
+      marker.style.top = `${Math.max(10, yPct - 15)}%`;
+
+      const dotClass = exp.doorType === 'oneway' ? 'oneway' : 'twoway';
+      marker.innerHTML = `
+        <div class="exp-marker-dot ${dotClass}">${exp.icon}</div>
+        <span class="exp-marker-label">${exp.name.split(' ').slice(0, 2).join(' ')}</span>
+      `;
+
+      marker.title = `${exp.name} - ${formatCurrencyFull(exp.cost)} at age ${Math.floor(exp.scheduledAge)}`;
+
+      experienceMarkers.appendChild(marker);
+    });
+  }
+
+  // Render insights
+  function renderInsights() {
+    const insights = [];
+
+    // One-way door warnings
+    scheduledExperiences.forEach(exp => {
+      if (exp.doorType === 'oneway') {
+        const windowStatus = getWindowStatus(exp, financials, children);
+        if (windowStatus.status === 'closing') {
+          insights.push({
+            icon: '⏰',
+            text: `<strong>${exp.name}</strong> window: ${windowStatus.message}`,
+          });
+        }
+      }
+    });
+
+    // Kids sweet spot reminders
+    children.forEach(child => {
+      const kidsExps = scheduledExperiences.filter(e => e.requiresKids);
+      kidsExps.forEach(exp => {
+        const yearsUntilClose = exp.kidAgeMax - child.age;
+        if (yearsUntilClose > 0 && yearsUntilClose <= 5) {
+          insights.push({
+            icon: '👶',
+            text: `<strong>${exp.name}</strong> with ${child.name}: ${yearsUntilClose} years in sweet spot`,
+          });
+        }
+      });
+    });
+
+    // Retirement insight
+    const retirementValue = window.trajectory?.find(t => t.age === financials.retirementAge)?.value || 0;
+    if (retirementValue > 0) {
+      insights.push({
+        icon: '🎉',
+        text: `At retirement (age ${financials.retirementAge}), you'll have <strong>${formatCurrency(retirementValue)}</strong>`,
+      });
+    }
+
+    // Trade-off suggestion
+    const endBalance = window.trajectory?.[window.trajectory.length - 1]?.value || 0;
+    if (endBalance > 200000) {
+      insights.push({
+        icon: '💡',
+        text: `Consider: Retiring <strong>2 years earlier</strong> or adding more experiences — you have cushion to spare`,
+      });
+    } else if (endBalance < 50000 && endBalance > 0) {
+      insights.push({
+        icon: '💡',
+        text: `Consider: <strong>+$200/month</strong> or retiring <strong>2 years later</strong> for more security`,
+      });
+    }
+
+    // Render
+    if (insights.length === 0) {
+      insights.push({
+        icon: '✨',
+        text: 'Add experiences to see personalized insights about your life plan',
+      });
+    }
+
+    insightList.innerHTML = insights.map(insight => `
+      <div class="insight-item">
+        <span class="insight-icon">${insight.icon}</span>
+        <span class="insight-text">${insight.text}</span>
+      </div>
+    `).join('');
+  }
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    renderTimeline();
+  });
+
+  // Initialize on load
+  init();
+</script>
+
+</body>
+</html>
