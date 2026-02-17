@@ -775,6 +775,14 @@ nav {
 .legend-dot.oneway { background: var(--sunset); }
 .legend-dot.twoway { background: var(--green); }
 
+.legend-band {
+  width: 16px;
+  height: 12px;
+  background: linear-gradient(180deg, rgba(224, 124, 62, 0.3) 0%, rgba(224, 124, 62, 0.1) 100%);
+  border-top: 2px solid var(--sunset);
+  border-radius: 2px;
+}
+
 .timeline-chart {
   position: relative;
   height: 320px;
@@ -871,6 +879,22 @@ nav {
   max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* One-way door year highlight bands */
+.oneway-year-band {
+  position: absolute;
+  top: 0;
+  bottom: 40px;
+  background: linear-gradient(180deg, rgba(224, 124, 62, 0.25) 0%, rgba(224, 124, 62, 0.08) 100%);
+  border-top: 3px solid var(--sunset);
+  pointer-events: all;
+  cursor: help;
+  transition: background 0.2s ease;
+}
+
+.oneway-year-band:hover {
+  background: linear-gradient(180deg, rgba(224, 124, 62, 0.35) 0%, rgba(224, 124, 62, 0.15) 100%);
 }
 
 /* Insights */

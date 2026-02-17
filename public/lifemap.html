@@ -65,8 +65,7 @@
     <div class="timeline-header">
       <span class="timeline-title">Life Timeline</span>
       <div class="timeline-legend">
-        <span class="legend-item"><span class="legend-dot oneway"></span> One-Way</span>
-        <span class="legend-item"><span class="legend-dot twoway"></span> Two-Way</span>
+        <span class="legend-item"><span class="legend-band"></span> One-Way Door Years</span>
       </div>
     </div>
     <div class="timeline-chart" id="timeline-chart">
@@ -464,32 +463,34 @@
       timelineYaxis.appendChild(label);
     });
 
-    // Experience markers - only show non-recurring or first of recurring
+    // Highlight years with one-way door experiences
     experienceMarkers.innerHTML = '';
-    var shownIds = {};
+    var onewayYears = {};
     scheduledExperiences.forEach(function(exp) {
-      var baseId = exp.id.split('-')[0];
-      if (exp.recurring && shownIds[baseId]) return; // Only show first instance of recurring
-      shownIds[baseId] = true;
+      if (exp.doorType === 'oneway') {
+        var age = Math.floor(exp.scheduledAge);
+        if (!onewayYears[age]) onewayYears[age] = [];
+        onewayYears[age].push(exp);
+      }
+    });
 
-      var ageIndex = Math.floor(exp.scheduledAge) - startAge;
-      if (ageIndex < 0 || ageIndex >= trajectory.length) return;
+    // Add highlight bands for one-way door years
+    Object.keys(onewayYears).forEach(function(ageStr) {
+      var age = parseInt(ageStr);
+      if (age < startAge || age > endAge) return;
 
-      var pct = ((exp.scheduledAge - startAge) / (endAge - startAge)) * 100;
-      var yValue = trajectory[ageIndex] ? trajectory[ageIndex].value : 0;
-      var yPct = (1 - yValue / maxValue) * 100;
+      var pct = ((age - startAge) / (endAge - startAge)) * 100;
+      var bandWidth = (1 / (endAge - startAge)) * 100;
 
-      var marker = document.createElement('div');
-      marker.className = 'exp-marker';
-      marker.style.left = pct + '%';
-      marker.style.top = Math.max(10, yPct - 15) + '%';
+      var band = document.createElement('div');
+      band.className = 'oneway-year-band';
+      band.style.left = pct + '%';
+      band.style.width = Math.max(bandWidth, 1.5) + '%';
 
-      var dotClass = exp.doorType === 'oneway' ? 'oneway' : 'twoway';
-      marker.innerHTML = '<div class="exp-marker-dot ' + dotClass + '">' + exp.icon + '</div>' +
-        '<span class="exp-marker-label">' + exp.name.split(' ').slice(0, 2).join(' ') + '</span>';
-      marker.title = exp.name + ' - ' + formatCurrency(exp.cost) + ' at age ' + Math.floor(exp.scheduledAge) + (exp.recurring ? ' (recurring)' : '');
+      var count = onewayYears[age].length;
+      band.title = 'Age ' + age + ': ' + count + ' one-way door experience' + (count > 1 ? 's' : '');
 
-      experienceMarkers.appendChild(marker);
+      experienceMarkers.appendChild(band);
     });
   }
 
