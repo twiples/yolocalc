@@ -489,6 +489,7 @@
   function renderInsights() {
     var insights = [];
     var phases = getLifePhaseRanges();
+    var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
 
     // Life phase summary
     var phaseNames = { prekids: 'Pre-Kids', family: 'Family Years', active: 'Active Empty Nesters', aging: 'Aging' };
@@ -515,61 +516,31 @@
       }
     }
 
-    // Inflation impact
-    if (totalExpCost > 0) {
-      var todaysCost = scheduledExperiences.reduce(function(sum, e) {
-        return sum + e.baseCost;
-      }, 0);
-      var inflationImpact = totalExpCost - todaysCost;
-      if (inflationImpact > 10000) {
-        insights.push({
-          icon: '📈',
-          text: 'Inflation adds <strong>' + formatCurrency(inflationImpact) + '</strong> over time'
-        });
-      }
-    }
-
-    // Count trips by phase
-    var tripsByPhase = { prekids: 0, family: 0, active: 0, aging: 0 };
-    scheduledExperiences.forEach(function(exp) {
-      if (exp.category && tripsByPhase[exp.category] !== undefined) {
-        tripsByPhase[exp.category]++;
-      }
-    });
-
-    var tripSummary = Object.keys(tripsByPhase).filter(function(p) {
-      return tripsByPhase[p] > 0;
-    }).map(function(p) {
-      return tripsByPhase[p] + ' ' + phaseNames[p];
-    }).join(', ');
-
-    if (tripSummary) {
+    // Cushion-focused insights
+    if (endBalance > 500000) {
       insights.push({
-        icon: '✈️',
-        text: '<strong>' + scheduledExperiences.length + ' total trips</strong>: ' + tripSummary
+        icon: '✨',
+        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. You can afford to live bigger — upgrade to luxury trips or retire earlier!'
       });
-    }
-
-    // Balance insight
-    var retireBalance = trajectory.find(function(t) { return t.age === financials.retirementAge; });
-    if (retireBalance) {
+    } else if (endBalance > 200000) {
       insights.push({
-        icon: '🎉',
-        text: 'At retirement (age ' + financials.retirementAge + '): <strong>' + formatCurrency(retireBalance.value) + '</strong>'
+        icon: '✨',
+        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. Consider upgrading some trips to premium or adding more experiences.'
       });
-    }
-
-    // Suggestions
-    var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
-    if (endBalance > 200000) {
+    } else if (endBalance > 50000) {
       insights.push({
-        icon: '💡',
-        text: 'You have cushion to spare. Consider retiring earlier or upgrading trip tiers.'
+        icon: '✅',
+        text: 'You\'re on track with <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. Your experiences are funded.'
       });
-    } else if (endBalance < 50000 && endBalance > 0) {
+    } else if (endBalance > 0) {
       insights.push({
-        icon: '💡',
-        text: 'Consider: <strong>+$200/month</strong> or retiring <strong>2 years later</strong>'
+        icon: '⚠️',
+        text: 'Tight budget — <strong>' + formatCurrency(endBalance) + '</strong> left at 85. Consider local trips or retiring a bit later.'
+      });
+    } else {
+      insights.push({
+        icon: '🚨',
+        text: 'Your plan runs out of money. Try reducing trip tiers or increasing monthly savings.'
       });
     }
 
