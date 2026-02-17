@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YoloCalc — Retire with memories, not just money.</title>
+<meta name="description" content="The experience-first retirement calculator. Map the life you actually want — and build the plan to live every moment of it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #2c2824;
+    --white: #ffffff;
+    --cream: #faf7f2;
+    --cream-deep: #f3ede4;
+    --warm-border: #e8e0d4;
+    --mid-warm: #b0a698;
+    --dark-warm: #5c5347;
+    --teal: #0097b2;
+    --teal-light: #e0f4f8;
+    --teal-soft: rgba(0, 151, 178, 0.08);
+    --sunset: #e07c3e;
+    --sunset-light: #fdecd8;
+    --green: #4caf72;
+    --green-light: #e3f4e9;
+    --text: #2c2824;
+    --text-muted: #746b60;
+    --text-faint: #a69e94;
+    --section-pad: clamp(5rem, 10vw, 8rem);
+    --side-pad: clamp(1.5rem, 5vw, 4rem);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    color: var(--text);
+    background: var(--cream);
+    overflow-x: hidden;
+    font-weight: 400;
+  }
+
+  ::selection { background: var(--sunset-light); color: var(--text); }
+
+  /* ======================= NAV ======================= */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 1.25rem var(--side-pad);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    background: rgba(250, 247, 242, 0.88);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(232, 224, 212, 0.6);
+  }
+
+  .nav-logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .nav-logo-dot {
+    width: 8px; height: 8px;
+    background: var(--sunset);
+    border-radius: 50%;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+  }
+
+  .nav-right a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 400;
+    transition: color 0.3s;
+  }
+  .nav-right a:hover { color: var(--text); }
+
+  .nav-cta-btn {
+    background: var(--text) !important;
+    color: var(--cream) !important;
+    padding: 0.55rem 1.4rem !important;
+    border-radius: 100px;
+    font-weight: 500 !important;
+    font-size: 0.82rem !important;
+    transition: all 0.3s ease !important;
+  }
+  .nav-cta-btn:hover { background: var(--sunset) !important; transform: translateY(-1px); }
+
+  /* ======================= HERO ======================= */
+  .hero {
+    min-height: 100vh;
+    background: var(--cream);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8rem var(--side-pad) 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 75% 20%, rgba(224, 124, 62, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 15% 80%, rgba(0, 151, 178, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 35% at 50% 50%, rgba(224, 124, 62, 0.04) 0%, transparent 50%);
+  }
+
+  .hero-shape-1 {
+    position: absolute;
+    top: 12%; right: 8%;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(224,124,62,0.07), rgba(224,124,62,0.02));
+    animation: float-gentle 20s ease-in-out infinite;
+  }
+
+  .hero-shape-2 {
+    position: absolute;
+    bottom: 15%; right: 25%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0,151,178,0.06), rgba(0,151,178,0.01));
+    animation: float-gentle 16s ease-in-out infinite reverse;
+  }
+
+  .hero-shape-3 {
+    position: absolute;
+    top: 30%; right: 15%;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(76,175,114,0.06), rgba(76,175,114,0.01));
+    animation: float-gentle 14s ease-in-out infinite 2s;
+  }
+
+  @keyframes float-gentle {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(12px, -8px); }
+    66% { transform: translate(-8px, 6px); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 750px;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--sunset);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: reveal 0.8s ease 0.2s forwards;
+  }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+    opacity: 0;
+    animation: reveal 0.8s ease 0.35s forwards;
+  }
+
+  .hero h1 em { font-style: italic; color: var(--sunset); }
+
+  .hero-sub {
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    font-weight: 300;
+    color: var(--text-muted);
+    max-width: 500px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: reveal 0.8s ease 0.5s forwards;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    opacity: 0;
+    animation: reveal 0.8s ease 0.65s forwards;
+  }
+
+  .btn-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--text);
+    color: var(--cream);
+    padding: 1rem 2rem;
+    border-radius: 100px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .btn-main:hover { background: var(--sunset); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(224,124,62,0.2); }
+  .btn-main .arrow { transition: transform 0.3s; }
+  .btn-main:hover .arrow { transform: translateX(3px); }
+
+  .btn-ghost {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    transition: color 0.3s;
+    padding: 1rem;
+  }
+  .btn-ghost:hover { color: var(--text); }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ======================= SECTION UTILITY ======================= */
+  .section { padding: var(--section-pad) var(--side-pad); }
+  .section-narrow { max-width: 1100px; margin: 0 auto; }
+
+  .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .label-teal { color: var(--teal); }
+  .label-sunset { color: var(--sunset); }
+  .label-green { color: var(--green); }
+
+  .heading {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.12;
+    color: var(--text);
+  }
+
+  .heading-lg { font-size: clamp(2.2rem, 5vw, 3.5rem); }
+  .heading-md { font-size: clamp(1.8rem, 3.5vw, 2.8rem); }
+
+  /* ======================= PROBLEM ======================= */
+  .problem {
+    background: var(--white);
+    border-top: 1px solid var(--warm-border);
+  }
+
+  .problem-lead {
+    max-width: 700px;
+    margin-bottom: 4rem;
+  }
+
+  .problem-lead .heading { margin-bottom: 1.25rem; }
+
+  .problem-lead p {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 550px;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .problem-card {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 2.25rem;
+    border: 1px solid var(--warm-border);
+    transition: all 0.35s ease;
+  }
+  .problem-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(44,40,36,0.06); }
+
+  .problem-card .card-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.2rem;
+    color: var(--warm-border);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .problem-card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.65rem;
+    line-height: 1.3;
+  }
+
+  .problem-card p {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  /* ======================= KIDS SECTION ======================= */
+  .kids-section {
+    background: var(--sunset-light);
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgba(224,124,62,0.15);
+  }
+
+  .kids-section::before {
+    content: '';
+    position: absolute;
+    top: -15%; right: -10%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(224,124,62,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .kids-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .kids-content .heading { margin-bottom: 1.5rem; }
+  .kids-content .heading em { font-style: italic; color: var(--sunset); }
+
+  .kids-content p {
+    font-size: 1.02rem;
+    font-weight: 300;
+    color: var(--dark-warm);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+    max-width: 480px;
+  }
+
+  .kids-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .kids-stat-number {
+    font-family: 'Instrument Serif', serif;
+    font-size: 3.5rem;
+    color: var(--sunset);
+    line-height: 1;
+  }
+
+  .kids-stat-text {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    max-width: 260px;
+  }
+
+  .kids-timeline-visual { position: relative; padding: 1rem; }
+
+  .kt-container {
+    background: var(--white);
+    border: 1px solid var(--warm-border);
+    border-radius: 16px;
+    padding: 2.25rem 2rem;
+    box-shadow: 0 4px 20px rgba(44,40,36,0.05);
+  }
+
+  .kt-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 1.75rem;
+  }
+
+  .kt-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .kt-row:last-child { margin-bottom: 0; }
+
+  .kt-age-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    width: 85px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .kt-bar-track {
+    flex: 1;
+    height: 38px;
+    background: var(--cream);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kt-bar {
+    height: 100%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .kt-bar.open {
+    background: linear-gradient(90deg, rgba(224,124,62,0.18), rgba(224,124,62,0.06));
+    border: 1px solid rgba(224,124,62,0.2);
+    color: var(--dark-warm);
+  }
+
+  .kt-bar.narrowing {
+    background: linear-gradient(90deg, rgba(0,151,178,0.14), rgba(0,151,178,0.04));
+    border: 1px solid rgba(0,151,178,0.18);
+    color: var(--dark-warm);
+  }
+
+  .kt-bar.closed {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.05);
+    color: var(--text-faint);
+  }
+
+  .kt-bar .door-icon { margin-right: 0.45rem; font-size: 0.82rem; }
+
+  .kt-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--warm-border);
+  }
+
+  .kt-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    color: var(--text-faint);
+  }
+
+  .kt-legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+  .kt-legend-dot.dot-open { background: rgba(224,124,62,0.45); }
+  .kt-legend-dot.dot-narrow { background: rgba(0,151,178,0.35); }
+  .kt-legend-dot.dot-closed { background: rgba(0,0,0,0.08); }
+
+  /* ======================= FRAMEWORK ======================= */
+  .framework {
+    background: var(--cream);
+    border-top: 1px solid var(--warm-border);
+  }
+
+  .framework-lead { max-width: 650px; margin-bottom: 4rem; }
+  .framework-lead .heading { margin-bottom: 1.25rem; }
+  .framework-lead p { font-size: 1.02rem; font-weight: 300; color: var(--text-muted); line-height: 1.7; }
+
+  .doors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .door-card { border-radius: 16px; padding: 2.25rem; background: var(--white); }
+  .door-card.one-way-card { border: 1px solid rgba(224,124,62,0.2); }
+  .door-card.two-way-card { border: 1px solid rgba(76,175,114,0.2); }
+
+  .door-card .door-icon-large { font-size: 1.8rem; margin-bottom: 1rem; }
+
+  .door-card h3 { font-family: 'Instrument Serif', serif; font-size: 1.4rem; font-weight: 400; margin-bottom: 0.35rem; }
+  .door-card.one-way-card h3 { color: var(--sunset); }
+  .door-card.two-way-card h3 { color: var(--green); }
+
+  .door-card .door-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.55; }
+  .door-card ul { list-style: none; padding: 0; }
+
+  .door-card ul li {
+    font-size: 0.88rem;
+    color: var(--text);
+    padding: 0.6rem 0;
+    border-top: 1px solid rgba(0,0,0,0.04);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    line-height: 1.45;
+  }
+
+  .door-card ul li .li-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 0.45rem; }
+  .one-way-card .li-dot { background: var(--sunset); }
+  .two-way-card .li-dot { background: var(--green); }
+
+  .framework-callout {
+    background: var(--white);
+    border: 1px solid var(--warm-border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .callout-mark { font-family: 'Instrument Serif', serif; font-size: 4.5rem; line-height: 0.8; color: var(--sunset); opacity: 0.35; }
+  .callout-text { font-family: 'Instrument Serif', serif; font-size: clamp(1.1rem, 2vw, 1.4rem); font-style: italic; line-height: 1.5; color: var(--dark-warm); }
+  .callout-text strong { font-weight: 400; color: var(--text); }
+  .callout-attr { font-family: 'Outfit', sans-serif; font-style: normal; display: block; margin-top: 1rem; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+
+  /* ======================= HOW IT WORKS ======================= */
+  .how-section { background: var(--white); border-top: 1px solid var(--warm-border); }
+  .how-lead { max-width: 600px; margin-bottom: 4rem; }
+  .how-lead .heading { margin-bottom: 1.25rem; }
+  .how-lead p { font-size: 1.02rem; font-weight: 300; color: var(--text-muted); line-height: 1.7; }
+
+  .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+  .step-num { font-family: 'Instrument Serif', serif; font-size: 4.5rem; color: var(--cream-deep); line-height: 0.85; margin-bottom: 1.25rem; }
+  .how-step h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.7rem; line-height: 1.3; }
+  .how-step p { font-size: 0.9rem; font-weight: 300; color: var(--text-muted); line-height: 1.65; margin-bottom: 1rem; }
+
+  .step-detail-box {
+    padding: 0.9rem 1.1rem;
+    background: var(--cream);
+    border-radius: 10px;
+    border: 1px solid var(--warm-border);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+  .step-detail-box strong { color: var(--text); font-weight: 600; }
+
+  /* ======================= PREVIEW ======================= */
+  .preview-section { background: var(--cream); border-top: 1px solid var(--warm-border); }
+  .preview-header { text-align: center; max-width: 600px; margin: 0 auto 3.5rem; }
+  .preview-header .heading { margin-bottom: 1rem; }
+  .preview-header p { font-size: 1rem; font-weight: 300; color: var(--text-muted); line-height: 1.65; }
+
+  .product-mock {
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--warm-border);
+    box-shadow: 0 20px 60px rgba(44,40,36,0.06), 0 1px 3px rgba(0,0,0,0.03);
+    overflow: hidden;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .mock-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--warm-border);
+    background: var(--cream);
+  }
+
+  .mock-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mock-dot:nth-child(1) { background: #ee7d6a; }
+  .mock-dot:nth-child(2) { background: #f2c05c; }
+  .mock-dot:nth-child(3) { background: #6ec87a; }
+
+  .mock-body { padding: 2rem; }
+
+  .mock-scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+
+  .mock-score-card {
+    padding: 1.15rem;
+    border-radius: 12px;
+    background: var(--cream);
+    border: 1px solid var(--warm-border);
+  }
+
+  .msc-label { font-size: 0.63rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.45rem; }
+  .msc-value { font-family: 'Instrument Serif', serif; font-size: 1.7rem; line-height: 1; margin-bottom: 0.2rem; }
+  .msc-value.v-green { color: var(--green); }
+  .msc-value.v-sunset { color: var(--sunset); }
+  .msc-value.v-default { color: var(--text); }
+  .msc-sub { font-size: 0.7rem; color: var(--text-faint); }
+
+  .mock-timeline-area {
+    position: relative;
+    height: 220px;
+    margin-top: 0.5rem;
+    border: 1px solid var(--warm-border);
+    border-radius: 12px;
+    background: var(--cream);
+    overflow: hidden;
+    padding: 1rem 1.5rem;
+  }
+
+  .mta-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); }
+  .mta-track { position: absolute; bottom: 45px; left: 1.5rem; right: 1.5rem; height: 2px; background: rgba(0,0,0,0.06); }
+  .mta-zone { position: absolute; bottom: 42px; height: 8px; border-radius: 4px; }
+  .mtz-peak { left: 5%; width: 20%; background: var(--green); opacity: 0.35; }
+  .mtz-active { left: 25%; width: 28%; background: var(--teal); opacity: 0.3; }
+  .mtz-comfort { left: 53%; width: 25%; background: var(--sunset); opacity: 0.2; }
+  .mtz-home { left: 78%; width: 17%; background: var(--text-faint); opacity: 0.12; }
+
+  .mta-age-marker { position: absolute; bottom: 18px; font-size: 0.68rem; font-weight: 500; color: var(--text-faint); transform: translateX(-50%); }
+
+  .mta-exp { position: absolute; bottom: 60px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .mta-exp-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    cursor: default; transition: transform 0.2s;
+  }
+  .mta-exp-dot:hover { transform: scale(1.15); }
+  .mta-exp-dot.ow { background: var(--sunset-light); border: 2px solid var(--sunset); }
+  .mta-exp-dot.tw { background: var(--green-light); border: 2px solid var(--green); }
+  .mta-exp-label { font-size: 0.58rem; font-weight: 500; color: var(--text-muted); margin-top: 5px; white-space: nowrap; }
+  .mta-curve { position: absolute; bottom: 47px; left: 1.5rem; right: 1.5rem; height: 120px; pointer-events: none; }
+
+  /* ======================= COMPARISON ======================= */
+  .comparison-section { background: var(--white); border-top: 1px solid var(--warm-border); }
+  .comparison-lead { max-width: 650px; margin-bottom: 3.5rem; }
+  .comparison-lead .heading { margin-bottom: 1.25rem; }
+  .comparison-lead p { font-size: 1.02rem; font-weight: 300; color: var(--text-muted); line-height: 1.7; }
+
+  .comp-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--warm-border);
+  }
+
+  .comp-table th, .comp-table td { padding: 1.1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--warm-border); font-size: 0.88rem; vertical-align: top; }
+  .comp-table th { font-size: 0.66rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); background: var(--cream); }
+  .comp-table td:first-child { font-weight: 500; color: var(--text-muted); width: 35%; background: var(--cream); }
+  .comp-table .col-others { color: var(--text-faint); font-weight: 300; }
+  .comp-table .col-yolo { color: var(--sunset); font-weight: 500; }
+  .comp-table tr:last-child td { border-bottom: none; }
+
+  /* ======================= FINAL CTA ======================= */
+  .final-cta {
+    background: var(--sunset-light);
+    text-align: center;
+    border-top: 1px solid rgba(224,124,62,0.12);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .final-cta::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(224,124,62,0.08) 0%, transparent 65%);
+    border-radius: 50%;
+  }
+
+  .final-inner { position: relative; z-index: 2; max-width: 600px; margin: 0 auto; }
+  .final-inner .heading { margin-bottom: 1.25rem; }
+  .final-inner .heading em { font-style: italic; color: var(--sunset); }
+  .final-inner p { font-size: 1.02rem; font-weight: 300; color: var(--dark-warm); line-height: 1.7; margin-bottom: 2.5rem; }
+
+  .final-btn {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    background: var(--text); color: var(--cream);
+    padding: 1.1rem 2.5rem; border-radius: 100px;
+    font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 500;
+    text-decoration: none; transition: all 0.3s ease;
+  }
+  .final-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(224,124,62,0.25); background: var(--sunset); }
+  .final-note { margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-faint); }
+
+  /* ======================= FOOTER ======================= */
+  footer {
+    padding: 2.5rem var(--side-pad);
+    border-top: 1px solid var(--warm-border);
+    background: var(--cream);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-left { font-weight: 600; font-size: 0.95rem; }
+  .footer-center { font-size: 0.82rem; color: var(--text-faint); font-style: italic; font-family: 'Instrument Serif', serif; }
+  .footer-right { display: flex; gap: 1.5rem; }
+  .footer-right a { font-size: 0.78rem; color: var(--text-faint); text-decoration: none; transition: color 0.2s; }
+  .footer-right a:hover { color: var(--text); }
+
+  /* ======================= RESPONSIVE ======================= */
+  @media (max-width: 900px) {
+    .problem-grid { grid-template-columns: 1fr; }
+    .kids-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+    .doors-grid { grid-template-columns: 1fr; }
+    .how-steps { grid-template-columns: 1fr; gap: 2rem; }
+    .mock-scores { grid-template-columns: repeat(2, 1fr); }
+    .mock-timeline-area { height: 180px; }
+    .mta-exp-label { display: none; }
+    .framework-callout { grid-template-columns: 1fr; gap: 0.5rem; }
+    .callout-mark { font-size: 3rem; }
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.25rem; }
+    .nav-right a:not(.nav-cta-btn) { display: none; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    .hero-shape-1, .hero-shape-2, .hero-shape-3 { display: none; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+    .kids-timeline-visual { padding: 0.5rem 0; }
+  }
+
+  .fade-in { opacity: 0; transform: translateY(25px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo"><span class="nav-logo-dot"></span> YoloCalc</a>
+  <div class="nav-right">
+    <a href="#problem">The Problem</a>
+    <a href="#kids">Family</a>
+    <a href="#framework">Framework</a>
+    <a href="#how">How It Works</a>
+    <a href="#cta" class="nav-cta-btn">Try Free →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-shape-1"></div>
+  <div class="hero-shape-2"></div>
+  <div class="hero-shape-3"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Experience-First Retirement Planning</div>
+    <h1>Design the life you'll actually <em>live</em></h1>
+    <p class="hero-sub">Traditional calculators give you a number. YoloCalc gives you a map of every experience ahead of you — and a plan to make each one happen.</p>
+    <div class="hero-ctas">
+      <a href="#cta" class="btn-main">Build Your Life Map <span class="arrow">→</span></a>
+      <a href="#problem" class="btn-ghost">Learn more</a>
+    </div>
+  </div>
+</section>
+
+<section class="section problem" id="problem">
+  <div class="section-narrow">
+    <div class="problem-lead fade-in">
+      <div class="label label-teal">A Better Approach</div>
+      <h2 class="heading heading-lg">You deserve a better question than "how much do you need?"</h2>
+      <p>The best retirement plan starts with what you want your life to look like — then builds the numbers around it.</p>
+    </div>
+    <div class="problem-grid fade-in">
+      <div class="problem-card">
+        <div class="card-num">01</div>
+        <h3>You need more than a number</h3>
+        <p>"You need $2.3 million." Okay — but what does that life look like? What experiences fill it? A great plan starts with the life, not the ledger.</p>
+      </div>
+      <div class="problem-card">
+        <div class="card-num">02</div>
+        <h3>Some experiences are worth more at 35 than 65</h3>
+        <p>A $5,000 trip at 35 generates 50 years of memories. The same trip at 70 gives you 15. Timing matters — and the right plan accounts for it.</p>
+      </div>
+      <div class="problem-card">
+        <div class="card-num">03</div>
+        <h3>You can plan for joy, not just safety</h3>
+        <p>Financial security matters — but so does knowing exactly which adventures, trips, and milestones your plan makes possible. Why not see both?</p>
+      </div>
+      <div class="problem-card">
+        <div class="card-num">04</div>
+        <h3>The richest retirement is the one you actually enjoy</h3>
+        <p>The goal isn't just a comfortable balance — it's a life full of the experiences that matter most to you. The best time to plan for that is right now.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section kids-section" id="kids">
+  <div class="section-narrow">
+    <div class="kids-inner">
+      <div class="kids-content fade-in">
+        <div class="label label-sunset">The Moments That Matter Most</div>
+        <h2 class="heading heading-lg">Every age is a <em>golden window</em> for something.</h2>
+        <p>Disney is pure magic at 7. National parks hit different at 10. That backpacking trip with your teenager? There's a perfect window for it — and YoloCalc helps you find it. The heritage trip to your parents' homeland with all three generations? The best time to plan it is now, while everyone's healthy and excited.</p>
+        <p>These aren't just trips. They're the stories your family will retell for decades — the inside jokes, the shared wonder, the look on your kid's face seeing the ocean for the first time.</p>
+        <div class="kids-stat">
+          <div class="kids-stat-number">18</div>
+          <div class="kids-stat-text">summers together before they launch into the world. Each one is a chance to build something unforgettable.</div>
+        </div>
+      </div>
+      <div class="kids-timeline-visual fade-in">
+        <div class="kt-container">
+          <div class="kt-title">Family Experience Sweet Spots</div>
+          <div class="kt-row">
+            <div class="kt-age-label">Ages 4–7</div>
+            <div class="kt-bar-track"><div class="kt-bar open" style="width: 95%"><span class="door-icon">✨</span> Disney, first beach, pure wonder</div></div>
+          </div>
+          <div class="kt-row">
+            <div class="kt-age-label">Ages 8–12</div>
+            <div class="kt-bar-track"><div class="kt-bar open" style="width: 85%"><span class="door-icon">🌟</span> National parks, camping, family Europe trip</div></div>
+          </div>
+          <div class="kt-row">
+            <div class="kt-age-label">Ages 13–17</div>
+            <div class="kt-bar-track"><div class="kt-bar narrowing" style="width: 60%"><span class="door-icon">🎯</span> Backpacking, heritage trip, pre-college adventures</div></div>
+          </div>
+          <div class="kt-row">
+            <div class="kt-age-label">Ages 18+</div>
+            <div class="kt-bar-track"><div class="kt-bar closed" style="width: 30%"><span class="door-icon">🚀</span> They're building their own adventures</div></div>
+          </div>
+          <div class="kt-row">
+            <div class="kt-age-label">Multi-gen</div>
+            <div class="kt-bar-track"><div class="kt-bar narrowing" style="width: 50%"><span class="door-icon">💛</span> 3 generations, everyone together</div></div>
+          </div>
+          <div class="kt-legend">
+            <div class="kt-legend-item"><div class="kt-legend-dot dot-open"></div> Sweet spot now</div>
+            <div class="kt-legend-item"><div class="kt-legend-dot dot-narrow"></div> Plan soon</div>
+            <div class="kt-legend-item"><div class="kt-legend-dot dot-closed"></div> New chapter</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section framework" id="framework">
+  <div class="section-narrow">
+    <div class="framework-lead fade-in">
+      <div class="label label-sunset">The Core Insight</div>
+      <h2 class="heading heading-lg">Some experiences are best at the right moment.</h2>
+      <p>In life, timing is everything. Some adventures have a perfect window — and when you know what that window is, you can plan to be there. That's the power of thinking in one-way and two-way doors.</p>
+    </div>
+    <div class="doors-grid fade-in">
+      <div class="door-card one-way-card">
+        <div class="door-icon-large">🚪</div>
+        <h3>One-Way Doors</h3>
+        <p class="door-desc">These shine brightest at a specific life stage. Prioritize them.</p>
+        <ul>
+          <li><div class="li-dot"></div>High-altitude treks and physically demanding adventures</li>
+          <li><div class="li-dot"></div>Family trips while kids are young enough to share it</li>
+          <li><div class="li-dot"></div>Multi-generational travel while parents are healthy</li>
+          <li><div class="li-dot"></div>Sabbaticals and career breaks before the cost compounds</li>
+          <li><div class="li-dot"></div>Backpacking and long-duration travel before life anchors you</li>
+          <li><div class="li-dot"></div>Diving, surfing, and endurance experiences</li>
+        </ul>
+      </div>
+      <div class="door-card two-way-card">
+        <div class="door-icon-large">🔄</div>
+        <h3>Two-Way Doors</h3>
+        <p class="door-desc">Wonderful at any age — schedule these around your priorities.</p>
+        <ul>
+          <li><div class="li-dot"></div>Beach vacations and resort stays</li>
+          <li><div class="li-dot"></div>City trips and cultural tourism</li>
+          <li><div class="li-dot"></div>Food tours, wine country, culinary travel</li>
+          <li><div class="li-dot"></div>Cruises (often better in your 60s anyway)</li>
+          <li><div class="li-dot"></div>Domestic road trips and weekend escapes</li>
+          <li><div class="li-dot"></div>Museum tours, historic sites</li>
+        </ul>
+      </div>
+    </div>
+    <div class="framework-callout fade-in">
+      <div class="callout-mark">"</div>
+      <div class="callout-text">
+        A dollar invested in the right experience at the right time is the most powerful investment you can make. When you know which experiences have a perfect moment, you can build a plan that captures every one of them. <strong>That's what YoloCalc does.</strong>
+        <span class="callout-attr">The YoloCalc Philosophy</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section how-section" id="how">
+  <div class="section-narrow">
+    <div class="how-lead fade-in">
+      <div class="label label-green">How It Works</div>
+      <h2 class="heading heading-lg">Two screens. Six inputs. Your whole life, mapped.</h2>
+      <p>No accounts, no linked banks, no 30-minute questionnaire. Just the essentials.</p>
+    </div>
+    <div class="how-steps fade-in">
+      <div class="how-step">
+        <div class="step-num">1</div>
+        <h3>Tell us your money</h3>
+        <p>Six fields: age, retirement age, savings, monthly contribution, income, expected return. Smart defaults handle everything else.</p>
+        <div class="step-detail-box">Your data <strong>never leaves your browser</strong>. We literally can't see it. No login required.</div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">2</div>
+        <h3>Add your experiences — and your kids' ages</h3>
+        <p>Pick from templates or add your own. Enter your children's ages and YoloCalc maps the perfect timing for family experiences based on their life stages.</p>
+        <div class="step-detail-box"><strong>Kid is 6?</strong> Disney sweet spot: now! <strong>Kid is 11?</strong> Adventure camping is perfect. The timing is specific to your family.</div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">3</div>
+        <h3>See your Life Map</h3>
+        <p>A visual timeline showing money and experiences together. See optimal timing, smart trade-offs, and the memory dividend of doing things at the perfect moment.</p>
+        <div class="step-detail-box">Drag sliders: <strong>"Retire 2 years later"</strong> or <strong>"+$200/mo"</strong> and watch which experiences unlock in real time.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section preview-section">
+  <div class="section-narrow">
+    <div class="preview-header fade-in">
+      <div class="label label-sunset">The Output</div>
+      <h2 class="heading heading-md">Your money and your life, one screen.</h2>
+      <p>Savings trajectory alongside every planned experience — with one-way doors and kids' sweet spots highlighted so you can plan the life you want.</p>
+    </div>
+    <div class="product-mock fade-in">
+      <div class="mock-topbar">
+        <div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-scores">
+          <div class="mock-score-card">
+            <div class="msc-label">Experiences Funded</div>
+            <div class="msc-value v-green">11 of 13</div>
+            <div class="msc-sub">85% of your dreams</div>
+          </div>
+          <div class="mock-score-card">
+            <div class="msc-label">One-Way Doors</div>
+            <div class="msc-value v-sunset">6 of 7</div>
+            <div class="msc-sub">Time-sensitive covered</div>
+          </div>
+          <div class="mock-score-card">
+            <div class="msc-label">Kids' Windows</div>
+            <div class="msc-value v-sunset">3 of 4</div>
+            <div class="msc-sub">Family trips planned</div>
+          </div>
+          <div class="mock-score-card">
+            <div class="msc-label">Balance at 85</div>
+            <div class="msc-value v-default">$412K</div>
+            <div class="msc-sub">Comfortable cushion</div>
+          </div>
+        </div>
+        <div class="mock-timeline-area">
+          <div class="mta-label">Life Timeline</div>
+          <div class="mta-curve">
+            <svg width="100%" height="100%" viewBox="0 0 1000 120" preserveAspectRatio="none" fill="none">
+              <defs>
+                <linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#e07c3e" stop-opacity="0.10"/>
+                  <stop offset="100%" stop-color="#e07c3e" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,110 C80,105 140,95 200,80 C260,65 300,55 370,40 C440,25 480,15 540,10 C600,5 640,4 700,12 C760,20 800,30 850,38 C900,46 940,55 1000,60" stroke="#e07c3e" stroke-width="2" fill="none" opacity="0.5"/>
+              <path d="M0,110 C80,105 140,95 200,80 C260,65 300,55 370,40 C440,25 480,15 540,10 C600,5 640,4 700,12 C760,20 800,30 850,38 C900,46 940,55 1000,60 L1000,120 L0,120 Z" fill="url(#cf)"/>
+            </svg>
+          </div>
+          <div class="mta-track"></div>
+          <div class="mta-zone mtz-peak"></div>
+          <div class="mta-zone mtz-active"></div>
+          <div class="mta-zone mtz-comfort"></div>
+          <div class="mta-zone mtz-home"></div>
+          <div class="mta-exp" style="left: 8%"><div class="mta-exp-dot ow">🏰</div><div class="mta-exp-label">Disney w/ kids</div></div>
+          <div class="mta-exp" style="left: 16%"><div class="mta-exp-dot ow">🎒</div><div class="mta-exp-label">SE Asia</div></div>
+          <div class="mta-exp" style="left: 24%"><div class="mta-exp-dot ow">👨‍👩‍👧‍👦</div><div class="mta-exp-label">Family Europe</div></div>
+          <div class="mta-exp" style="left: 34%"><div class="mta-exp-dot ow">🏔</div><div class="mta-exp-label">Everest BC</div></div>
+          <div class="mta-exp" style="left: 44%"><div class="mta-exp-dot ow">🚗</div><div class="mta-exp-label">Teen roadtrip</div></div>
+          <div class="mta-exp" style="left: 56%"><div class="mta-exp-dot tw">🗼</div><div class="mta-exp-label">Japan</div></div>
+          <div class="mta-exp" style="left: 68%"><div class="mta-exp-dot tw">✈️</div><div class="mta-exp-label">Retire trip</div></div>
+          <div class="mta-exp" style="left: 82%"><div class="mta-exp-dot tw">🚢</div><div class="mta-exp-label">Cruise</div></div>
+          <div class="mta-age-marker" style="left: 5%">35</div>
+          <div class="mta-age-marker" style="left: 25%">45</div>
+          <div class="mta-age-marker" style="left: 53%">60</div>
+          <div class="mta-age-marker" style="left: 78%">75</div>
+          <div class="mta-age-marker" style="left: 95%">85</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section comparison-section">
+  <div class="section-narrow">
+    <div class="comparison-lead fade-in">
+      <div class="label label-teal">Why YoloCalc</div>
+      <h2 class="heading heading-lg">This isn't another retirement calculator.</h2>
+      <p>It's the first tool that treats what you do with your money as a first-class input.</p>
+    </div>
+    <table class="comp-table fade-in">
+      <thead><tr><th></th><th>Traditional Calculators</th><th>YoloCalc</th></tr></thead>
+      <tbody>
+        <tr><td>Primary question</td><td class="col-others">"How much do you need?"</td><td class="col-yolo">"What experiences will make your life extraordinary?"</td></tr>
+        <tr><td>Output</td><td class="col-others">A single dollar figure</td><td class="col-yolo">Visual life map with money + experiences</td></tr>
+        <tr><td>Spending model</td><td class="col-others">Identical annual line items</td><td class="col-yolo">One-way doors (time-sensitive) vs. two-way doors (flexible)</td></tr>
+        <tr><td>Kids' ages</td><td class="col-others">Not considered</td><td class="col-yolo">Maps family experience sweet spots by age</td></tr>
+        <tr><td>Physical ability</td><td class="col-others">Never modeled</td><td class="col-yolo">Maps optimal timing for age-dependent experiences</td></tr>
+        <tr><td>Emotional tone</td><td class="col-others">"You're behind. Save more."</td><td class="col-yolo">"Here's the life you can have."</td></tr>
+        <tr><td>Your data</td><td class="col-others">Requires account, may sell data</td><td class="col-yolo">Never leaves your browser</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section final-cta" id="cta">
+  <div class="final-inner">
+    <div class="label label-sunset">Start Now</div>
+    <h2 class="heading heading-lg">Your best life is <em>plannable</em>.</h2>
+    <p>Every experience you dream about can be mapped, timed, and funded. Your kids' magical ages, your peak-energy adventures, the trips you'll tell stories about forever. See the whole picture — and start making it real.</p>
+    <a href="#" class="final-btn">Build Your Life Map — Free <span>→</span></a>
+    <p class="final-note">No signup · No linked accounts · 100% private · Takes 2 minutes</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">YoloCalc</div>
+  <div class="footer-center">Retire with memories, not just money.</div>
+  <div class="footer-right">
+    <a href="#">About</a>
+    <a href="#">Methodology</a>
+    <a href="#">Blog</a>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
