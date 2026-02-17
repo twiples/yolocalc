@@ -775,14 +775,6 @@ nav {
 .legend-dot.oneway { background: var(--sunset); }
 .legend-dot.twoway { background: var(--green); }
 
-.legend-band {
-  width: 16px;
-  height: 12px;
-  background: linear-gradient(180deg, rgba(224, 124, 62, 0.3) 0%, rgba(224, 124, 62, 0.1) 100%);
-  border-top: 2px solid var(--sunset);
-  border-radius: 2px;
-}
-
 .timeline-chart {
   position: relative;
   height: 320px;
@@ -870,31 +862,92 @@ nav {
   border: 2px solid var(--green);
 }
 
-.exp-marker-label {
-  font-size: 0.65rem;
-  font-weight: 500;
+/* Experience Strip */
+.experience-strip {
+  margin-top: 1rem;
+  padding: 0 60px 0 60px;
+}
+
+.exp-strip-phases {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.exp-strip-phase {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 0.75rem;
+  min-width: 0;
+  transition: all 0.2s ease;
+}
+
+.exp-strip-phase.has-experiences {
+  background: var(--white);
+  border: 1px solid var(--warm-border);
+}
+
+.exp-strip-phase.empty {
+  background: var(--cream);
+  opacity: 0.7;
+}
+
+.exp-strip-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.exp-strip-phase-icon {
+  font-size: 0.9rem;
+}
+
+.exp-strip-phase-name {
+  font-size: 0.7rem;
+  font-weight: 600;
   color: var(--text-muted);
-  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   white-space: nowrap;
-  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* One-way door year highlight bands */
-.oneway-year-band {
-  position: absolute;
-  top: 0;
-  bottom: 40px;
-  background: linear-gradient(180deg, rgba(224, 124, 62, 0.25) 0%, rgba(224, 124, 62, 0.08) 100%);
-  border-top: 3px solid var(--sunset);
-  pointer-events: all;
-  cursor: help;
-  transition: background 0.2s ease;
+.exp-strip-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
-.oneway-year-band:hover {
-  background: linear-gradient(180deg, rgba(224, 124, 62, 0.35) 0%, rgba(224, 124, 62, 0.15) 100%);
+.exp-strip-icon {
+  font-size: 1.1rem;
+  cursor: help;
+  transition: transform 0.15s ease;
+}
+
+.exp-strip-icon:hover {
+  transform: scale(1.2);
+}
+
+.exp-strip-empty {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .experience-strip {
+    padding: 0;
+  }
+
+  .exp-strip-phases {
+    flex-direction: column;
+  }
+
+  .exp-strip-phase {
+    width: 100% !important;
+  }
 }
 
 /* Insights */

@@ -64,16 +64,13 @@
   <div class="timeline-container">
     <div class="timeline-header">
       <span class="timeline-title">Life Timeline</span>
-      <div class="timeline-legend">
-        <span class="legend-item"><span class="legend-band"></span> Time-sensitive experiences</span>
-      </div>
     </div>
     <div class="timeline-chart" id="timeline-chart">
       <div class="timeline-yaxis" id="timeline-yaxis"></div>
       <svg class="timeline-svg" id="timeline-svg" preserveAspectRatio="none"></svg>
-      <div class="experience-markers" id="experience-markers"></div>
       <div class="timeline-axis" id="timeline-axis"></div>
     </div>
+    <div class="experience-strip" id="experience-strip"></div>
   </div>
 
   <div class="insights-section" id="insights-section">
@@ -184,7 +181,7 @@
   var timelineSvg = document.getElementById('timeline-svg');
   var timelineAxis = document.getElementById('timeline-axis');
   var timelineYaxis = document.getElementById('timeline-yaxis');
-  var experienceMarkers = document.getElementById('experience-markers');
+  var experienceStrip = document.getElementById('experience-strip');
   var insightList = document.getElementById('insight-list');
   var retireSlider = document.getElementById('retire-slider');
   var retireSliderValue = document.getElementById('retire-slider-value');
@@ -504,35 +501,73 @@
       timelineYaxis.appendChild(label);
     });
 
-    // Highlight years with one-way door experiences
-    experienceMarkers.innerHTML = '';
-    var onewayYears = {};
+    // Render experience strip by life phase
+    renderExperienceStrip();
+  }
+
+  function renderExperienceStrip() {
+    var phases = getLifePhaseRanges();
+    var phaseOrder = ['prekids', 'family', 'active', 'aging'];
+    var phaseNames = { prekids: 'Pre-Kids', family: 'Family', active: 'Empty Nesters', aging: 'Aging' };
+    var phaseIcons = { prekids: '💑', family: '👨‍👩‍👧', active: '🥾', aging: '🌅' };
+
+    // Group experiences by phase
+    var expByPhase = { prekids: [], family: [], active: [], aging: [] };
     scheduledExperiences.forEach(function(exp) {
-      if (exp.doorType === 'oneway') {
-        var age = Math.floor(exp.scheduledAge);
-        if (!onewayYears[age]) onewayYears[age] = [];
-        onewayYears[age].push(exp);
+      var cat = exp.category || 'active';
+      if (expByPhase[cat]) {
+        // Only add unique experience types (not each recurring instance)
+        var baseId = exp.id.split('-')[0];
+        var exists = expByPhase[cat].some(function(e) { return e.id.split('-')[0] === baseId; });
+        if (!exists) {
+          expByPhase[cat].push(exp);
+        }
       }
     });
 
-    // Add highlight bands for one-way door years
-    Object.keys(onewayYears).forEach(function(ageStr) {
-      var age = parseInt(ageStr);
-      if (age < startAge || age > endAge) return;
-
-      var pct = ((age - startAge) / (endAge - startAge)) * 100;
-      var bandWidth = (1 / (endAge - startAge)) * 100;
-
-      var band = document.createElement('div');
-      band.className = 'oneway-year-band';
-      band.style.left = pct + '%';
-      band.style.width = Math.max(bandWidth, 1.5) + '%';
-
-      var count = onewayYears[age].length;
-      band.title = 'Age ' + age + ': ' + count + ' one-way door experience' + (count > 1 ? 's' : '');
-
-      experienceMarkers.appendChild(band);
+    // Calculate phase widths based on years
+    var totalYears = 85 - financials.age;
+    var phaseWidths = {};
+    phaseOrder.forEach(function(phase) {
+      var years = Math.max(0, Math.min(phases[phase].end, 85) - Math.max(phases[phase].start, financials.age));
+      phaseWidths[phase] = (years / totalYears) * 100;
     });
+
+    // Check which phases have content or width
+    var hasKids = children.length > 0 || travelers.children > 0;
+
+    var html = '<div class="exp-strip-phases">';
+
+    phaseOrder.forEach(function(phase) {
+      // Skip pre-kids if user has kids
+      if (phase === 'prekids' && hasKids) return;
+      // Skip phases with no width
+      if (phaseWidths[phase] < 1) return;
+
+      var exps = expByPhase[phase];
+      var phaseClass = exps.length > 0 ? 'has-experiences' : 'empty';
+
+      html += '<div class="exp-strip-phase ' + phaseClass + '" style="width: ' + phaseWidths[phase] + '%;">';
+      html += '<div class="exp-strip-phase-header">';
+      html += '<span class="exp-strip-phase-icon">' + phaseIcons[phase] + '</span>';
+      html += '<span class="exp-strip-phase-name">' + phaseNames[phase] + '</span>';
+      html += '</div>';
+
+      if (exps.length > 0) {
+        html += '<div class="exp-strip-icons">';
+        exps.forEach(function(exp) {
+          html += '<span class="exp-strip-icon" title="' + exp.name + '">' + exp.icon + '</span>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="exp-strip-empty">No trips planned</div>';
+      }
+
+      html += '</div>';
+    });
+
+    html += '</div>';
+    experienceStrip.innerHTML = html;
   }
 
   function renderInsights() {
