@@ -262,6 +262,9 @@
       var category = CATEGORIES[categoryId];
       var categoryExps = EXPERIENCE_TEMPLATES.filter(function(exp) {
         if (exp.category !== categoryId) return false;
+        // Hide pre-kids if user has children
+        if (exp.category === 'prekids' && (children.length > 0 || travelers.children > 0)) return false;
+        // Hide family experiences if no kids
         if (exp.requiresKids && children.length === 0 && travelers.children === 0) return false;
         return true;
       });

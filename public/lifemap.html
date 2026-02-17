@@ -242,14 +242,16 @@
       youngestKidAge = Math.min.apply(null, children.map(function(c) { return c.age; }));
     }
 
+    // Aging always starts at 75
+    phases.aging.start = 75;
+
     if (hasKids) {
       // Already have kids - no pre-kids phase ahead
       var yearsUntilEmpty = Math.max(0, 18 - youngestKidAge);
       phases.family.start = currentAge;
       phases.family.end = currentAge + yearsUntilEmpty;
       phases.active.start = phases.family.end;
-      phases.active.end = Math.min(phases.active.start + 15, 75);
-      phases.aging.start = phases.active.end;
+      phases.active.end = 75;
     } else {
       // No kids yet - assume pre-kids until 35 or 5 years, whichever is later
       var prekidsEnd = Math.max(currentAge + 5, Math.min(35, currentAge + 10));
@@ -259,8 +261,7 @@
       phases.family.start = prekidsEnd;
       phases.family.end = prekidsEnd + 18;
       phases.active.start = phases.family.end;
-      phases.active.end = Math.min(phases.active.start + 15, 75);
-      phases.aging.start = phases.active.end;
+      phases.active.end = 75;
     }
 
     return phases;
