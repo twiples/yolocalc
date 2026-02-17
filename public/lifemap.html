@@ -100,9 +100,9 @@
           <div class="dwz-stat-sub">In today's dollars</div>
         </div>
         <div class="dwz-stat">
-          <div class="dwz-stat-label">Experiences Left Behind</div>
+          <div class="dwz-stat-label">Life Unlived</div>
           <div class="dwz-stat-value sunset" id="dwz-experiences">0</div>
-          <div class="dwz-stat-sub" id="dwz-experiences-sub">Premium trips you could have taken</div>
+          <div class="dwz-stat-sub" id="dwz-experiences-sub">Experiences, gifts, or impact left on the table</div>
         </div>
       </div>
       <div class="dwz-suggestions" id="dwz-suggestions"></div>
@@ -634,17 +634,24 @@
     dwzUnused.textContent = formatCurrency(presentValueBalance);
     dwzExperiences.textContent = unusedExperiences;
 
-    if (unusedExperiences === 1) {
-      dwzExperiencesSub.textContent = 'Premium trip you could have taken';
+    // Dynamic subtitle based on what they could do
+    var examples = [];
+    if (unusedExperiences >= 5) examples.push(unusedExperiences + ' premium trips');
+    if (presentValueBalance > 50000) examples.push('$' + Math.round(presentValueBalance * 0.1 / 1000) + 'K to charity');
+    if (presentValueBalance > 100000) examples.push(Math.floor(presentValueBalance / 30000) + ' years of house cleaning');
+
+    if (examples.length > 0) {
+      dwzExperiencesSub.textContent = 'e.g. ' + examples.slice(0, 2).join(' or ');
     } else {
-      dwzExperiencesSub.textContent = 'Premium trips you could have taken';
+      dwzExperiencesSub.textContent = 'Experiences, gifts, or impact left on the table';
     }
 
     // Generate suggestions (all in today's dollars)
     var suggestions = [];
+    var yearsLeft = 85 - financials.age;
 
     if (presentValueBalance > 100000) {
-      // Calculate how much earlier they could retire
+      // Retire earlier
       var yearsEarlier = Math.floor(presentValueBalance / (financials.monthlyContribution * 12 + 50000));
       if (yearsEarlier > 0 && financials.retirementAge - yearsEarlier >= 55) {
         suggestions.push({
@@ -654,52 +661,77 @@
         });
       }
 
-      // Upgrade trips suggestion
-      var upgradeCount = Math.floor(presentValueBalance / 10000);
+      // Charitable giving
+      var charityAmount = Math.floor(presentValueBalance * 0.1);
       suggestions.push({
-        icon: '✈️',
-        title: 'Upgrade ' + Math.min(upgradeCount, 10) + ' trips to luxury',
-        desc: 'Turn local trips into premium, or premium into luxury.'
+        icon: '💝',
+        title: 'Donate $' + Math.round(charityAmount / 1000) + 'K to causes you care about',
+        desc: 'Give while alive to see your impact. Money given now changes lives.'
       });
     }
 
     if (presentValueBalance > 50000) {
-      // Add more experiences
+      // Time buyback
+      var monthlyTimeBuyback = Math.floor(presentValueBalance / yearsLeft / 12 * 0.2);
+      if (monthlyTimeBuyback > 200) {
+        suggestions.push({
+          icon: '⏰',
+          title: 'Buy back ' + Math.round(monthlyTimeBuyback / 50) + ' hours/month',
+          desc: 'Hire help for cleaning, cooking, errands. Trade money for time with loved ones.'
+        });
+      }
+
+      // Health investment
       suggestions.push({
-        icon: '🌍',
-        title: 'Add ' + unusedExperiences + ' more experience' + (unusedExperiences > 1 ? 's' : ''),
-        desc: 'Your money is waiting to become memories.'
+        icon: '💪',
+        title: 'Invest $' + Math.round(presentValueBalance * 0.05 / 1000) + 'K in your health',
+        desc: 'Personal trainer, better food, preventive care. Health enables all other experiences.'
       });
 
-      // Give with warm hand
+      // Give with warm hand to children
       if (children.length > 0 || travelers.children > 0) {
-        var giftPerKid = Math.floor(presentValueBalance / Math.max(1, children.length || travelers.children) / 2);
+        var numKids = Math.max(1, children.length || travelers.children);
+        var giftPerKid = Math.floor(presentValueBalance / numKids * 0.3);
         suggestions.push({
           icon: '🎁',
-          title: 'Give $' + Math.round(giftPerKid / 1000) + 'K to each child now',
-          desc: 'Money has more impact when they\'re young.'
+          title: 'Give $' + Math.round(giftPerKid / 1000) + 'K to each child at 26-35',
+          desc: 'Money has 3x the impact when they\'re building their lives, not inheriting at 60.'
         });
       }
     }
 
-    if (presentValueBalance > 200000) {
-      // Reduce monthly savings
-      var excessMonthly = Math.floor((presentValueBalance - 50000) / ((85 - financials.age) * 12));
+    if (presentValueBalance > 30000) {
+      // Learning and skills
       suggestions.push({
-        icon: '💰',
-        title: 'Save $' + Math.round(excessMonthly) + ' less per month',
-        desc: 'Redirect to experiences now, not savings you won\'t use.'
+        icon: '🎓',
+        title: 'Learn something you\'ve always wanted',
+        desc: 'Music lessons, language classes, art, cooking. Skills compound into lifelong joy.'
+      });
+
+      // Relationship investments
+      suggestions.push({
+        icon: '👨‍👩‍👧‍👦',
+        title: 'Invest in relationships, not just trips',
+        desc: 'Weekly dinners, visits to aging parents, quality time. Shared moments > solo adventures.'
       });
     }
 
-    // Memory dividend insight
-    var memoryDividends = calculateMemoryDividends();
-    if (memoryDividends > 0 && unusedExperiences > 0) {
-      var missedDividends = unusedExperiences * 20; // avg 20 years of memories per trip
+    if (presentValueBalance > 200000) {
+      // Reduce monthly savings
+      var excessMonthly = Math.floor((presentValueBalance - 50000) / (yearsLeft * 12));
       suggestions.push({
-        icon: '🧠',
-        title: missedDividends + ' years of memories lost',
-        desc: 'Each trip pays dividends every time you remember it.'
+        icon: '💰',
+        title: 'Save $' + Math.round(excessMonthly) + ' less per month',
+        desc: 'Redirect to experiences now. You can\'t take it with you.'
+      });
+    }
+
+    // Upgrade experiences
+    if (unusedExperiences > 0) {
+      suggestions.push({
+        icon: '✈️',
+        title: 'Upgrade ' + Math.min(unusedExperiences, 10) + ' experiences',
+        desc: 'Go premium instead of local. The memory dividend is worth it.'
       });
     }
 
@@ -707,7 +739,7 @@
       suggestions.push({
         icon: '🎯',
         title: 'You\'re close to optimal!',
-        desc: 'Your money and experiences are well balanced.'
+        desc: 'Your money and life experiences are well balanced.'
       });
     }
 
