@@ -65,6 +65,40 @@
       margin-bottom: 1rem;
       font-style: italic;
     }
+    .timing-selector {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--warm-border);
+    }
+    .timing-btn {
+      flex: 1;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--warm-border);
+      border-radius: 6px;
+      background: var(--white);
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .timing-btn:hover {
+      border-color: var(--sunset);
+      color: var(--sunset);
+    }
+    .timing-btn.active {
+      background: var(--sunset);
+      border-color: var(--sunset);
+      color: white;
+    }
+    .timing-label {
+      font-size: 0.68rem;
+      color: var(--text-faint);
+      margin-bottom: 0.4rem;
+    }
   </style>
 </head>
 <body>
@@ -92,8 +126,8 @@
 <main class="app-container" style="padding-bottom: 120px;">
   <header class="screen-header">
     <div class="screen-label">Step 2 of 3</div>
-    <h1 class="screen-title">What experiences will fill your life?</h1>
-    <p class="screen-subtitle">Choose the adventures that matter most for each chapter of your journey.</p>
+    <h1 class="screen-title">What will fill your life?</h1>
+    <p class="screen-subtitle">Adventures, learning, giving back, meaningful projects — choose what matters most.</p>
   </header>
 
   <section class="travelers-section">
@@ -147,36 +181,43 @@
     travelers: 'yolocalc_travelers'
   };
 
-  // Experience templates organized by life phase
+  // Experience templates organized by category
   // Costs are PER PERSON in today's dollars
-  // Four phases: Pre-Kids, Family Years, Active Empty Nesters, Aging
   var EXPERIENCE_TEMPLATES = [
-    // PRE-KIDS: Before having children - adventure and couples travel
-    { id: 'prekids-luxury', name: 'Annual Luxury Trip', category: 'prekids', icon: '✈️', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Maldives, Japan, Safari — while you can travel light' },
-    { id: 'prekids-premium', name: 'Annual Premium Trip', category: 'prekids', icon: '🌍', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Europe, South America, Southeast Asia' },
-    { id: 'prekids-local', name: 'Annual Local Trip', category: 'prekids', icon: '🚗', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 10, adultsOnly: true, description: 'Weekend getaways, road trips, ski weekends' },
+    // ADVENTURES - Travel and bucket list experiences
+    { id: 'adv-luxury', name: 'Annual Luxury Adventure', category: 'adventures', icon: '✈️', costPerPerson: 20000, tier: 'luxury', recurring: true, recurringYears: 30, description: 'Safari, Maldives, Antarctica — the big bucket list trips' },
+    { id: 'adv-premium', name: 'Annual Premium Adventure', category: 'adventures', icon: '🌍', costPerPerson: 10000, tier: 'premium', recurring: true, recurringYears: 30, description: 'Europe, Asia, South America — meaningful exploration' },
+    { id: 'adv-local', name: 'Annual Local Adventure', category: 'adventures', icon: '🚗', costPerPerson: 3000, tier: 'local', recurring: true, recurringYears: 30, description: 'Road trips, national parks, weekend getaways' },
+    { id: 'adv-family', name: 'Annual Family Adventure', category: 'adventures', icon: '👨‍👩‍👧', costPerPerson: 8000, tier: 'premium', recurring: true, recurringYears: 18, requiresKids: true, description: 'Disney, beach vacations, creating family memories' },
+    { id: 'adv-bucket', name: 'Once-in-a-Lifetime Experience', category: 'adventures', icon: '🎯', costPerPerson: 25000, tier: 'luxury', recurring: false, description: 'That one big dream — Everest base camp, around the world, etc.' },
 
-    // FAMILY YEARS: Kids at home until age 18
-    { id: 'family-luxury', name: 'Annual Luxury Family Trip', category: 'family', icon: '🏰', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 18, requiresKids: true, description: 'Disney Cruise, Hawaii, international family resorts' },
-    { id: 'family-premium', name: 'Annual Premium Family Trip', category: 'family', icon: '🗼', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', recurring: true, recurringYears: 18, requiresKids: true, description: 'Theme parks, family Europe, beach resorts' },
-    { id: 'family-local', name: 'Annual Local Family Trip', category: 'family', icon: '🏕️', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 18, requiresKids: true, description: 'National parks, camping, domestic beach week' },
+    // LEARNING & GROWTH - Skills, education, personal development
+    { id: 'learn-course', name: 'Annual Learning Investment', category: 'learning', icon: '📚', costPerPerson: 3000, tier: 'local', recurring: true, recurringYears: 30, description: 'Courses, certifications, workshops — never stop growing' },
+    { id: 'learn-hobby', name: 'New Hobby or Skill', category: 'learning', icon: '🎸', costPerPerson: 2000, tier: 'local', recurring: true, recurringYears: 30, description: 'Music, art, cooking, language — explore your interests' },
+    { id: 'learn-degree', name: 'Advanced Degree or Program', category: 'learning', icon: '🎓', costPerPerson: 50000, tier: 'luxury', recurring: false, description: 'MBA, masters, intensive program — level up your career' },
+    { id: 'learn-retreat', name: 'Annual Retreat or Conference', category: 'learning', icon: '🧘', costPerPerson: 4000, tier: 'premium', recurring: true, recurringYears: 20, description: 'Wellness retreat, industry conference, mastermind' },
+    { id: 'learn-coach', name: 'Coaching or Mentorship', category: 'learning', icon: '💡', costPerPerson: 5000, tier: 'premium', recurring: true, recurringYears: 10, description: 'Executive coach, life coach, personal development' },
 
-    // ACTIVE EMPTY NESTERS: Kids gone, still physically active
-    { id: 'active-luxury', name: 'Annual Luxury Trip', category: 'active', icon: '🦁', costPerPerson: 20000, tier: 'luxury', doorType: 'oneway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'African safari, Antarctica, luxury adventure' },
-    { id: 'active-premium', name: 'Annual Premium Trip', category: 'active', icon: '🥾', costPerPerson: 10000, tier: 'premium', doorType: 'oneway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Patagonia, hiking tours, active adventures' },
-    { id: 'active-local', name: 'Annual Local Trip', category: 'active', icon: '⛷️', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Ski trips, golf getaways, weekend adventures' },
+    // GIVING BACK - Volunteering, donations, making a difference
+    { id: 'give-donate', name: 'Annual Charitable Giving', category: 'giving', icon: '💝', costPerPerson: 5000, tier: 'premium', recurring: true, recurringYears: 40, description: 'Support causes you believe in — make a lasting impact' },
+    { id: 'give-major', name: 'Major Philanthropic Gift', category: 'giving', icon: '🏛️', costPerPerson: 50000, tier: 'luxury', recurring: false, description: 'Endowment, building fund, scholarship — leave a legacy' },
+    { id: 'give-volunteer', name: 'Volunteer Travel', category: 'giving', icon: '🤝', costPerPerson: 4000, tier: 'premium', recurring: true, recurringYears: 20, description: 'Service trips, habitat builds, teaching abroad' },
+    { id: 'give-local', name: 'Local Volunteering', category: 'giving', icon: '🏠', costPerPerson: 500, tier: 'local', recurring: true, recurringYears: 40, description: 'Food bank, mentoring, community service — give your time' },
+    { id: 'give-kids', name: 'Gifts to Children', category: 'giving', icon: '🎁', costPerPerson: 10000, tier: 'premium', recurring: true, recurringYears: 20, requiresKids: true, description: 'Help with house, wedding, education — give while you\'re here' },
 
-    // AGING: Later years, more leisurely travel
-    { id: 'aging-luxury', name: 'Annual Luxury Trip', category: 'aging', icon: '🚢', costPerPerson: 20000, tier: 'luxury', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Luxury cruises, river cruises, guided tours' },
-    { id: 'aging-premium', name: 'Annual Premium Trip', category: 'aging', icon: '🏝️', costPerPerson: 10000, tier: 'premium', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Resort stays, cultural tours, relaxed travel' },
-    { id: 'aging-local', name: 'Annual Local Trip', category: 'aging', icon: '🌸', costPerPerson: 3000, tier: 'local', doorType: 'twoway', recurring: true, recurringYears: 15, adultsOnly: true, description: 'Visiting family, domestic getaways, staycations' }
+    // MEANINGFUL PROJECTS - Creative work, legacy, starting something
+    { id: 'project-creative', name: 'Creative Project', category: 'projects', icon: '🎨', costPerPerson: 5000, tier: 'premium', recurring: false, description: 'Write a book, record an album, create art — express yourself' },
+    { id: 'project-business', name: 'Start Something', category: 'projects', icon: '🚀', costPerPerson: 25000, tier: 'luxury', recurring: false, description: 'Side business, nonprofit, passion project — build something' },
+    { id: 'project-home', name: 'Dream Home Project', category: 'projects', icon: '🏡', costPerPerson: 30000, tier: 'luxury', recurring: false, description: 'Renovation, garden, workshop — create your perfect space' },
+    { id: 'project-family', name: 'Family History Project', category: 'projects', icon: '📜', costPerPerson: 3000, tier: 'local', recurring: false, description: 'Genealogy, memoir, photo archive — preserve your story' },
+    { id: 'project-annual', name: 'Annual Passion Project', category: 'projects', icon: '⭐', costPerPerson: 2000, tier: 'local', recurring: true, recurringYears: 30, description: 'Time and resources for what matters most to you' }
   ];
 
   var CATEGORIES = {
-    prekids: { name: 'Pre-Kids', icon: '💑', description: 'Spontaneous adventures while it\'s just the two of you' },
-    family: { name: 'Family Years', icon: '👨‍👩‍👧', description: 'Making memories together while the kids are home' },
-    active: { name: 'Active Empty Nesters', icon: '🥾', description: 'Your bucket list adventures — the freedom to explore' },
-    aging: { name: 'Golden Years', icon: '🌅', description: 'Leisurely journeys and cherished moments' }
+    adventures: { name: 'Adventures', icon: '✈️', description: 'Travel, exploration, and bucket list experiences' },
+    learning: { name: 'Learning & Growth', icon: '📚', description: 'Skills, education, and personal development' },
+    giving: { name: 'Giving Back', icon: '💝', description: 'Volunteering, donations, and making a difference' },
+    projects: { name: 'Meaningful Projects', icon: '🚀', description: 'Creative work, legacy projects, and building something' }
   };
 
   function saveData(key, data) {
@@ -207,8 +248,17 @@
   var childrenInput = document.getElementById('children-count');
   var inflationInput = document.getElementById('inflation-rate');
 
+  // Life phases for timing
+  var LIFE_PHASES = [
+    { id: 'early', label: 'Young & Free', ageRange: [20, 35] },
+    { id: 'family', label: 'Family Years', ageRange: [30, 55] },
+    { id: 'empty', label: 'Empty Nest', ageRange: [50, 70] },
+    { id: 'golden', label: 'Golden Years', ageRange: [65, 95] }
+  ];
+
   // State
   var selectedIds = [];
+  var selectedTimings = {}; // Track timing phases for one-time experiences (now stores arrays)
   var children = [];
   var travelers = { adults: 2, children: 0, inflation: 3 };
 
@@ -232,6 +282,13 @@
       if (selectedIds.indexOf(exp.id) === -1) {
         selectedIds.push(exp.id);
       }
+      // Restore timing if saved (now an array of phase IDs)
+      if (exp.timing && Array.isArray(exp.timing)) {
+        selectedTimings[exp.id] = exp.timing;
+      } else if (exp.timing) {
+        // Handle legacy single-value timing
+        selectedTimings[exp.id] = [exp.timing];
+      }
     });
   }
 
@@ -247,9 +304,7 @@
       var category = CATEGORIES[categoryId];
       var categoryExps = EXPERIENCE_TEMPLATES.filter(function(exp) {
         if (exp.category !== categoryId) return false;
-        // Hide pre-kids if user has children
-        if (exp.category === 'prekids' && (children.length > 0 || travelers.children > 0)) return false;
-        // Hide family experiences if no kids
+        // Hide family-specific experiences if no kids
         if (exp.requiresKids && children.length === 0 && travelers.children === 0) return false;
         return true;
       });
@@ -275,6 +330,7 @@
         var isSelected = selectedIds.indexOf(exp.id) !== -1;
         var tierClass = 'tier-' + exp.tier;
         var tierLabel = exp.tier.charAt(0).toUpperCase() + exp.tier.slice(1);
+        var currentTiming = selectedTimings[exp.id] || 'now';
 
         html += '<div class="experience-card ' + (isSelected ? 'selected' : '') + '" data-id="' + exp.id + '">' +
           '<div class="experience-checkbox">' + (isSelected ? '✓' : '') + '</div>' +
@@ -283,10 +339,26 @@
           '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">' + exp.description + '</div>' +
           '<div class="experience-meta" style="margin-top: 0.5rem;">' +
           '<span class="tier-badge ' + tierClass + '">' + tierLabel + '</span>' +
-          (exp.recurring ? '<span class="experience-type-badge recurring">Annual</span>' : '') +
-          '</div>' +
-          '</div>' +
+          (exp.recurring ? '<span class="experience-type-badge recurring">Annual</span>' : '<span class="experience-type-badge">One-time</span>') +
           '</div>';
+
+        // Add timing selector for selected one-time experiences
+        if (isSelected && !exp.recurring) {
+          var selectedPhases = currentTiming || [];
+          html += '<div class="timing-selector" data-exp-id="' + exp.id + '">' +
+            '<div style="width: 100%;">' +
+            '<div class="timing-label">When in your life? <span style="opacity: 0.7;">(select all that apply)</span></div>' +
+            '<div style="display: flex; gap: 0.4rem;">';
+
+          LIFE_PHASES.forEach(function(phase) {
+            var isActive = selectedPhases.indexOf(phase.id) !== -1;
+            html += '<button class="timing-btn ' + (isActive ? 'active' : '') + '" data-timing="' + phase.id + '">' + phase.label + '</button>';
+          });
+
+          html += '</div></div></div>';
+        }
+
+        html += '</div></div>';
       });
 
       html += '</div>';
@@ -294,16 +366,46 @@
       categoriesContainer.appendChild(section);
     });
 
-    // Add click handlers
+    // Add click handlers for experience cards
     var cards = document.querySelectorAll('.experience-card');
     for (var i = 0; i < cards.length; i++) {
       (function(card) {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function(e) {
+          // Don't toggle if clicking on timing button
+          if (e.target.classList.contains('timing-btn')) return;
           var expId = card.getAttribute('data-id');
           toggleExperience(expId);
         });
       })(cards[i]);
     }
+
+    // Add click handlers for timing buttons
+    var timingBtns = document.querySelectorAll('.timing-btn');
+    for (var j = 0; j < timingBtns.length; j++) {
+      (function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var selector = btn.closest('.timing-selector');
+          var expId = selector.getAttribute('data-exp-id');
+          var timing = btn.getAttribute('data-timing');
+          setTiming(expId, timing);
+        });
+      })(timingBtns[j]);
+    }
+  }
+
+  function setTiming(expId, phaseId) {
+    if (!selectedTimings[expId]) {
+      selectedTimings[expId] = [];
+    }
+    var idx = selectedTimings[expId].indexOf(phaseId);
+    if (idx === -1) {
+      selectedTimings[expId].push(phaseId);
+    } else {
+      selectedTimings[expId].splice(idx, 1);
+    }
+    renderCategories();
+    updateSummary();
   }
 
   function toggleExperience(expId) {
@@ -370,7 +472,8 @@
         recurring: exp.recurring,
         recurringYears: exp.recurringYears,
         recurringInterval: exp.recurringInterval || 1,
-        adultsOnly: exp.adultsOnly
+        adultsOnly: exp.adultsOnly,
+        timing: exp.recurring ? null : (selectedTimings[exp.id] && selectedTimings[exp.id].length > 0 ? selectedTimings[exp.id] : ['early', 'family', 'empty', 'golden'])
       };
     }).filter(function(e) { return e !== null; });
 

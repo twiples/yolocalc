@@ -55,7 +55,7 @@
       <div class="score-sub" id="score-dividends-sub">Years of memories</div>
     </div>
     <div class="score-card">
-      <div class="score-label">Balance at 85</div>
+      <div class="score-label">Balance at 95</div>
       <div class="score-value default" id="score-balance">$0</div>
       <div class="score-sub" id="score-balance-sub">Your cushion</div>
     </div>
@@ -92,7 +92,7 @@
     <div class="dwz-content" id="dwz-content" style="display: none;">
       <div class="dwz-stat-grid">
         <div class="dwz-stat">
-          <div class="dwz-stat-label">Unused at 85</div>
+          <div class="dwz-stat-label">Unused at 95</div>
           <div class="dwz-stat-value" id="dwz-unused">$0</div>
           <div class="dwz-stat-sub">In today's dollars</div>
         </div>
@@ -301,32 +301,51 @@
     return phases;
   }
 
+  // Life phase age ranges for scheduling
+  var LIFE_PHASE_AGES = {
+    early: { min: 20, max: 35 },
+    family: { min: 30, max: 55 },
+    empty: { min: 50, max: 70 },
+    golden: { min: 65, max: 95 }
+  };
+
+  function getScheduleAgeForPhases(phases, currentAge) {
+    // Find the earliest phase the user can still do
+    var phaseOrder = ['early', 'family', 'empty', 'golden'];
+    for (var i = 0; i < phaseOrder.length; i++) {
+      var phaseId = phaseOrder[i];
+      if (phases.indexOf(phaseId) !== -1) {
+        var phase = LIFE_PHASE_AGES[phaseId];
+        // If user is within or before this phase, schedule at the start of it
+        if (currentAge < phase.max) {
+          return Math.max(currentAge + 1, phase.min);
+        }
+      }
+    }
+    // Default to next year if no phases match
+    return currentAge + 1;
+  }
+
   function scheduleExperiences() {
     scheduledExperiences = [];
     totalExpCost = 0;
-    var phases = getLifePhaseRanges();
 
     experiences.forEach(function(exp) {
       var baseCost = exp.baseCost || (exp.costPerPerson * (exp.totalPeople || 2));
-      var category = exp.category || 'active';
+      var category = exp.category || 'adventures';
 
-      // Determine phase range for this experience
-      var phaseRange = phases[category] || phases.active;
-      var phaseStart = Math.max(financials.age + 1, phaseRange.start);
-      var phaseEnd = Math.min(phaseRange.end, 85);
+      // Determine scheduling based on timing preference or default
+      var startAge = financials.age + 1;
+      var endAge = 95;
 
       if (exp.recurring && exp.recurringYears) {
-        // Schedule recurring experiences within their life phase
+        // Schedule recurring experiences
         var interval = exp.recurringInterval || 1;
-        var yearsInPhase = phaseEnd - phaseStart;
-        var numTrips = Math.min(
-          Math.floor(yearsInPhase / interval) + 1,
-          Math.floor(exp.recurringYears / interval)
-        );
+        var numInstances = Math.floor(exp.recurringYears / interval);
 
-        for (var i = 0; i < numTrips; i++) {
-          var age = phaseStart + (i * interval);
-          if (age > 85) break;
+        for (var i = 0; i < numInstances; i++) {
+          var age = startAge + (i * interval);
+          if (age > endAge) break;
 
           var yearsFromNow = age - financials.age;
           var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
@@ -338,15 +357,21 @@
             icon: exp.icon,
             baseCost: baseCost,
             cost: inflatedCost,
-            doorType: exp.doorType,
             scheduledAge: age,
             recurring: true,
             category: category
           });
         }
       } else {
-        // One-time experience - schedule at start of phase
-        var scheduledAge = Math.max(financials.age + 1, Math.min(phaseStart, 85));
+        // One-time experience - schedule based on selected life phases
+        var scheduledAge;
+        if (exp.timing && Array.isArray(exp.timing) && exp.timing.length > 0) {
+          scheduledAge = getScheduleAgeForPhases(exp.timing, financials.age);
+        } else {
+          scheduledAge = financials.age + 1;
+        }
+        scheduledAge = Math.min(scheduledAge, endAge);
+
         var yearsFromNow = scheduledAge - financials.age;
         var inflatedCost = getInflatedCost(baseCost, yearsFromNow);
         totalExpCost += inflatedCost;
@@ -357,10 +382,10 @@
           icon: exp.icon,
           baseCost: baseCost,
           cost: inflatedCost,
-          doorType: exp.doorType,
           scheduledAge: scheduledAge,
           recurring: false,
-          category: category
+          category: category,
+          phases: exp.timing
         });
       }
     });
@@ -370,7 +395,7 @@
 
   function calculateTrajectory() {
     var startAge = financials.age;
-    var endAge = 85;
+    var endAge = 95;
     trajectory = [];
 
     var currentValue = financials.currentSavings;
@@ -415,7 +440,7 @@
     var memoryDividends = calculateMemoryDividends();
     scoreDividends.textContent = memoryDividends;
     var avgDividendsPerExp = scheduledExperiences.length > 0 ? Math.round(memoryDividends / scheduledExperiences.length) : 0;
-    scoreDividendsSub.textContent = avgDividendsPerExp + ' avg years per trip';
+    scoreDividendsSub.textContent = avgDividendsPerExp + ' avg years each';
 
     scoreBalance.textContent = formatCurrency(endBalance);
     scoreBalanceSub.textContent = endBalance > 100000 ? 'Comfortable cushion' : endBalance > 0 ? 'Tight but possible' : 'Needs adjustment';
@@ -425,7 +450,7 @@
     if (trajectory.length === 0) return;
 
     var startAge = financials.age;
-    var endAge = 85;
+    var endAge = 95;
     var maxValue = Math.max.apply(null, trajectory.map(function(t) { return t.value; })) * 1.1 || 100000;
 
     var container = document.getElementById('timeline-chart');
@@ -506,51 +531,41 @@
   }
 
   function renderExperienceStrip() {
-    var phases = getLifePhaseRanges();
-    var phaseOrder = ['prekids', 'family', 'active', 'aging'];
-    var phaseNames = { prekids: 'Pre-Kids', family: 'Family', active: 'Empty Nesters', aging: 'Aging' };
-    var phaseIcons = { prekids: '💑', family: '👨‍👩‍👧', active: '🥾', aging: '🌅' };
+    // Group experiences by category (adventures, learning, giving, projects)
+    var categoryOrder = ['adventures', 'learning', 'giving', 'projects'];
+    var categoryNames = { adventures: 'Adventures', learning: 'Learning', giving: 'Giving', projects: 'Projects' };
+    var categoryIcons = { adventures: '✈️', learning: '📚', giving: '💝', projects: '🚀' };
 
-    // Group experiences by phase
-    var expByPhase = { prekids: [], family: [], active: [], aging: [] };
+    var expByCategory = { adventures: [], learning: [], giving: [], projects: [] };
     scheduledExperiences.forEach(function(exp) {
-      var cat = exp.category || 'active';
-      if (expByPhase[cat]) {
+      var cat = exp.category || 'adventures';
+      if (expByCategory[cat]) {
         // Only add unique experience types (not each recurring instance)
         var baseId = exp.id.split('-')[0];
-        var exists = expByPhase[cat].some(function(e) { return e.id.split('-')[0] === baseId; });
+        var exists = expByCategory[cat].some(function(e) { return e.id.split('-')[0] === baseId; });
         if (!exists) {
-          expByPhase[cat].push(exp);
+          expByCategory[cat].push(exp);
         }
       }
     });
 
-    // Calculate phase widths based on years
-    var totalYears = 85 - financials.age;
-    var phaseWidths = {};
-    phaseOrder.forEach(function(phase) {
-      var years = Math.max(0, Math.min(phases[phase].end, 85) - Math.max(phases[phase].start, financials.age));
-      phaseWidths[phase] = (years / totalYears) * 100;
+    // Count total experiences to determine widths
+    var totalExps = 0;
+    categoryOrder.forEach(function(cat) {
+      totalExps += Math.max(1, expByCategory[cat].length);
     });
-
-    // Check which phases have content or width
-    var hasKids = children.length > 0 || travelers.children > 0;
 
     var html = '<div class="exp-strip-phases">';
 
-    phaseOrder.forEach(function(phase) {
-      // Skip pre-kids if user has kids
-      if (phase === 'prekids' && hasKids) return;
-      // Skip phases with no width
-      if (phaseWidths[phase] < 1) return;
+    categoryOrder.forEach(function(cat) {
+      var exps = expByCategory[cat];
+      var catClass = exps.length > 0 ? 'has-experiences' : 'empty';
+      var width = (Math.max(1, exps.length) / totalExps) * 100;
 
-      var exps = expByPhase[phase];
-      var phaseClass = exps.length > 0 ? 'has-experiences' : 'empty';
-
-      html += '<div class="exp-strip-phase ' + phaseClass + '" style="width: ' + phaseWidths[phase] + '%;">';
+      html += '<div class="exp-strip-phase ' + catClass + '" style="flex: ' + Math.max(1, exps.length) + ';">';
       html += '<div class="exp-strip-phase-header">';
-      html += '<span class="exp-strip-phase-icon">' + phaseIcons[phase] + '</span>';
-      html += '<span class="exp-strip-phase-name">' + phaseNames[phase] + '</span>';
+      html += '<span class="exp-strip-phase-icon">' + categoryIcons[cat] + '</span>';
+      html += '<span class="exp-strip-phase-name">' + categoryNames[cat] + '</span>';
       html += '</div>';
 
       if (exps.length > 0) {
@@ -560,7 +575,7 @@
         });
         html += '</div>';
       } else {
-        html += '<div class="exp-strip-empty">No trips planned</div>';
+        html += '<div class="exp-strip-empty">None selected</div>';
       }
 
       html += '</div>';
@@ -604,27 +619,27 @@
     if (endBalance > 500000) {
       insights.push({
         icon: '✨',
-        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. You can afford to live bigger — upgrade to luxury trips or retire earlier!'
+        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 95. You can afford to live bigger — upgrade experiences or retire earlier!'
       });
     } else if (endBalance > 200000) {
       insights.push({
         icon: '✨',
-        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. Consider upgrading some trips to premium or adding more experiences.'
+        text: 'You have <strong>' + formatCurrency(endBalance) + '</strong> cushion at 95. Consider upgrading to premium or adding more experiences.'
       });
     } else if (endBalance > 50000) {
       insights.push({
         icon: '✅',
-        text: 'You\'re on track with <strong>' + formatCurrency(endBalance) + '</strong> cushion at 85. Your experiences are funded.'
+        text: 'You\'re on track with <strong>' + formatCurrency(endBalance) + '</strong> cushion at 95. Your experiences are funded.'
       });
     } else if (endBalance > 0) {
       insights.push({
         icon: '⚠️',
-        text: 'Tight budget — <strong>' + formatCurrency(endBalance) + '</strong> left at 85. Consider local trips or retiring a bit later.'
+        text: 'Tight budget — <strong>' + formatCurrency(endBalance) + '</strong> left at 85. Consider local experiences or retiring a bit later.'
       });
     } else {
       insights.push({
         icon: '🚨',
-        text: 'Your plan runs out of money. Try reducing trip tiers or increasing monthly savings.'
+        text: 'Your plan runs out of money. Try choosing local experiences or increasing monthly savings.'
       });
     }
 
@@ -643,7 +658,7 @@
   // Calculate memory dividends - years of memories from each experience
   function calculateMemoryDividends() {
     var totalDividends = 0;
-    var endOfLife = 85;
+    var endOfLife = 95;
 
     scheduledExperiences.forEach(function(exp) {
       var yearsOfMemories = endOfLife - exp.scheduledAge;
@@ -658,12 +673,12 @@
     var endBalance = trajectory.length > 0 ? trajectory[trajectory.length - 1].value : 0;
 
     // Deflate future balance to today's dollars for fair comparison
-    var yearsToEnd = 85 - financials.age;
+    var yearsToEnd = 95 - financials.age;
     var inflationRate = travelers.inflation / 100;
     var presentValueBalance = endBalance / Math.pow(1 + inflationRate, yearsToEnd);
 
     // Calculate unused money and convert to experiences (all in today's dollars)
-    var avgTripCost = 10000 * (travelers.adults + travelers.children); // Premium trip in today's $
+    var avgTripCost = 10000 * (travelers.adults + travelers.children); // Premium adventure in today's $
     var unusedExperiences = Math.floor(presentValueBalance / avgTripCost);
 
     dwzUnused.textContent = formatCurrency(presentValueBalance);
@@ -671,7 +686,7 @@
 
     // Dynamic subtitle based on what they could do
     var examples = [];
-    if (unusedExperiences >= 5) examples.push(unusedExperiences + ' premium trips');
+    if (unusedExperiences >= 5) examples.push(unusedExperiences + ' premium experiences');
     if (presentValueBalance > 50000) examples.push('$' + Math.round(presentValueBalance * 0.1 / 1000) + 'K to charity');
     if (presentValueBalance > 100000) examples.push(Math.floor(presentValueBalance / 30000) + ' years of house cleaning');
 
@@ -683,7 +698,7 @@
 
     // Generate suggestions (all in today's dollars)
     var suggestions = [];
-    var yearsLeft = 85 - financials.age;
+    var yearsLeft = 95 - financials.age;
 
     if (presentValueBalance > 100000) {
       // Retire earlier
@@ -746,8 +761,8 @@
       // Relationship investments
       suggestions.push({
         icon: '👨‍👩‍👧‍👦',
-        title: 'Invest in relationships, not just trips',
-        desc: 'Weekly dinners, visits to aging parents, quality time. Shared moments > solo adventures.'
+        title: 'Invest in relationships, not just adventures',
+        desc: 'Weekly dinners, visits to aging parents, quality time. Shared moments matter most.'
       });
     }
 

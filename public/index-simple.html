@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YoloCalc — Retire with memories, not just money.</title>
+<meta name="description" content="The experience-first retirement calculator. See every adventure ahead — and live life to the fullest.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #2c2824;
+    --white: #ffffff;
+    --cream: #faf7f2;
+    --cream-deep: #f3ede4;
+    --warm-border: #e8e0d4;
+    --dark-warm: #5c5347;
+    --teal: #0097b2;
+    --sunset: #e07c3e;
+    --sunset-light: #fdecd8;
+    --green: #4caf72;
+    --text: #2c2824;
+    --text-muted: #746b60;
+    --text-faint: #a69e94;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Outfit', sans-serif; color: var(--text); background: var(--cream); }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 1.25rem clamp(1.5rem, 5vw, 4rem);
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(250, 247, 242, 0.9); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(232, 224, 212, 0.6); z-index: 100;
+  }
+  .nav-logo { font-weight: 700; font-size: 1.2rem; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 0.45rem; }
+  .nav-logo-dot { width: 8px; height: 8px; background: var(--sunset); border-radius: 50%; }
+  .nav-cta { background: var(--text); color: var(--cream); padding: 0.55rem 1.4rem; border-radius: 100px; font-weight: 500; font-size: 0.82rem; text-decoration: none; transition: all 0.3s; }
+  .nav-cta:hover { background: var(--sunset); }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 8rem clamp(1.5rem, 5vw, 4rem) 4rem; max-width: 800px;
+  }
+  .hero-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sunset); margin-bottom: 1.5rem; }
+  .hero h1 { font-family: 'Instrument Serif', serif; font-size: clamp(3rem, 7vw, 5rem); font-weight: 400; line-height: 1.1; margin-bottom: 1.5rem; }
+  .hero h1 em { font-style: italic; color: var(--sunset); }
+  .hero p { font-size: 1.15rem; font-weight: 300; color: var(--text-muted); line-height: 1.7; margin-bottom: 2.5rem; max-width: 500px; }
+  .btn-main { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--text); color: var(--cream); padding: 1rem 2rem; border-radius: 100px; font-size: 0.95rem; font-weight: 500; text-decoration: none; transition: all 0.3s; }
+  .btn-main:hover { background: var(--sunset); transform: translateY(-2px); }
+
+  /* Section */
+  .section { padding: clamp(4rem, 10vw, 7rem) clamp(1.5rem, 5vw, 4rem); }
+  .section-inner { max-width: 1000px; margin: 0 auto; }
+  .section-white { background: var(--white); border-top: 1px solid var(--warm-border); }
+  .section-sunset { background: var(--sunset-light); border-top: 1px solid rgba(224,124,62,0.15); }
+
+  /* Value Props */
+  .values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; }
+  .value-num { font-family: 'Instrument Serif', serif; font-size: 3rem; color: var(--cream-deep); line-height: 1; margin-bottom: 0.75rem; }
+  .value h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .value p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* Family */
+  .family-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+  .family-content h2 { font-family: 'Instrument Serif', serif; font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 400; line-height: 1.15; margin-bottom: 1.25rem; }
+  .family-content h2 em { font-style: italic; color: var(--sunset); }
+  .family-content p { font-size: 1rem; color: var(--dark-warm); line-height: 1.7; margin-bottom: 1rem; }
+  .family-stat { display: flex; align-items: baseline; gap: 0.75rem; margin-top: 1.5rem; }
+  .family-stat-num { font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--sunset); line-height: 1; }
+  .family-stat-text { font-size: 0.9rem; color: var(--text-muted); max-width: 200px; }
+
+  .windows { background: var(--white); border-radius: 16px; padding: 2rem; border: 1px solid var(--warm-border); }
+  .window-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--warm-border); }
+  .window-row:last-child { border-bottom: none; }
+  .window-age { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); width: 70px; }
+  .window-bar { flex: 1; height: 32px; border-radius: 8px; display: flex; align-items: center; padding: 0 0.75rem; font-size: 0.75rem; font-weight: 500; }
+  .window-bar.hot { background: linear-gradient(90deg, rgba(224,124,62,0.2), rgba(224,124,62,0.05)); color: var(--dark-warm); }
+  .window-bar.warm { background: linear-gradient(90deg, rgba(0,151,178,0.15), rgba(0,151,178,0.03)); color: var(--dark-warm); }
+  .window-bar.cool { background: rgba(0,0,0,0.03); color: var(--text-faint); }
+
+  /* How */
+  .how-header { text-align: center; margin-bottom: 3rem; }
+  .how-header h2 { font-family: 'Instrument Serif', serif; font-size: clamp(2rem, 4vw, 2.5rem); font-weight: 400; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+  .step-num { font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--cream-deep); line-height: 1; margin-bottom: 1rem; }
+  .step h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .step p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; }
+
+  /* Preview */
+  .preview-header { text-align: center; margin-bottom: 2.5rem; }
+  .preview-header h2 { font-family: 'Instrument Serif', serif; font-size: clamp(1.8rem, 3vw, 2.2rem); font-weight: 400; margin-bottom: 0.75rem; }
+  .preview-header p { font-size: 0.95rem; color: var(--text-muted); }
+
+  .mock { background: var(--white); border-radius: 16px; border: 1px solid var(--warm-border); overflow: hidden; box-shadow: 0 15px 50px rgba(44,40,36,0.06); }
+  .mock-bar { display: flex; gap: 0.4rem; padding: 0.8rem 1.2rem; background: var(--cream); border-bottom: 1px solid var(--warm-border); }
+  .mock-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mock-dot:nth-child(1) { background: #ee7d6a; }
+  .mock-dot:nth-child(2) { background: #f2c05c; }
+  .mock-dot:nth-child(3) { background: #6ec87a; }
+  .mock-body { padding: 1.5rem; }
+  .mock-scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+  .mock-score { background: var(--cream); border-radius: 10px; padding: 1rem; border: 1px solid var(--warm-border); }
+  .mock-score-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.3rem; }
+  .mock-score-value { font-family: 'Instrument Serif', serif; font-size: 1.5rem; }
+  .mock-score-value.green { color: var(--green); }
+  .mock-score-value.sunset { color: var(--sunset); }
+  .mock-timeline { height: 160px; background: var(--cream); border-radius: 10px; border: 1px solid var(--warm-border); position: relative; overflow: hidden; padding: 1rem 0; }
+  .mock-timeline-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); padding-left: 1rem; }
+  .mock-curve { position: absolute; bottom: 40px; left: 0; right: 0; width: 100%; height: 90px; }
+  .mock-track { position: absolute; bottom: 38px; left: 0; right: 0; height: 2px; background: rgba(0,0,0,0.06); }
+  .mock-age { position: absolute; bottom: 12px; font-size: 0.68rem; font-weight: 500; color: var(--text-faint); transform: translateX(-50%); }
+  .mock-phases { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .mock-phase { background: var(--cream); border-radius: 8px; padding: 0.6rem 0.8rem; border: 1px solid var(--warm-border); }
+  .mock-phase-header { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
+  .mock-phase-header span { font-size: 0.8rem; }
+  .mock-phase-icons { font-size: 0.9rem; display: flex; gap: 0.25rem; }
+
+  /* CTA */
+  .cta { text-align: center; }
+  .cta h2 { font-family: 'Instrument Serif', serif; font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 400; margin-bottom: 1rem; }
+  .cta h2 em { font-style: italic; color: var(--sunset); }
+  .cta p { font-size: 1rem; color: var(--dark-warm); max-width: 500px; margin: 0 auto 2rem; line-height: 1.7; }
+  .cta-note { font-size: 0.8rem; color: var(--text-faint); margin-top: 1.5rem; }
+
+  /* Footer */
+  footer { padding: 2rem clamp(1.5rem, 5vw, 4rem); border-top: 1px solid var(--warm-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-faint); }
+  footer a { color: var(--text-faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 800px) {
+    .values, .steps { grid-template-columns: 1fr; gap: 2rem; }
+    .family-grid { grid-template-columns: 1fr; }
+    .mock-scores { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo"><span class="nav-logo-dot"></span> YoloCalc</a>
+  <a href="/calculator.html" class="nav-cta">Try Free →</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Retirement Calculator</div>
+  <h1>Live your <em>fullest</em> life</h1>
+  <p>Most calculators give you a number. YoloCalc shows you every experience ahead — adventures, learning, giving back, meaningful projects — and inspires you to make each one happen.</p>
+  <a href="/calculator.html" class="btn-main">Build Your Life Map →</a>
+</section>
+
+<section class="section section-white">
+  <div class="section-inner">
+    <div class="values">
+      <div class="value">
+        <div class="value-num">01</div>
+        <h3>Start with life, not numbers</h3>
+        <p>Adventures, learning, giving, projects — what do you want? The finances follow.</p>
+      </div>
+      <div class="value">
+        <div class="value-num">02</div>
+        <h3>Timing changes everything</h3>
+        <p>An experience at 35 gives you 50 years of memories. At 70, just 15.</p>
+      </div>
+      <div class="value">
+        <div class="value-num">03</div>
+        <h3>Live fully, give generously</h3>
+        <p>See what's possible — for yourself, your loved ones, and the world.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-sunset">
+  <div class="section-inner">
+    <div class="family-grid">
+      <div class="family-content">
+        <h2>Every age is a <em>golden window</em></h2>
+        <p>Disney at 7. National parks at 10. That heritage trip with grandparents while everyone's healthy.</p>
+        <p>These aren't just trips — they're the stories your family retells for decades.</p>
+        <div class="family-stat">
+          <div class="family-stat-num">18</div>
+          <div class="family-stat-text">summers before they're off building their own adventures</div>
+        </div>
+      </div>
+      <div class="windows">
+        <div class="window-row">
+          <div class="window-age">Ages 4–7</div>
+          <div class="window-bar hot">✨ Disney, first beach, pure wonder</div>
+        </div>
+        <div class="window-row">
+          <div class="window-age">Ages 8–12</div>
+          <div class="window-bar hot">🌟 National parks, camping, Europe</div>
+        </div>
+        <div class="window-row">
+          <div class="window-age">Ages 13–17</div>
+          <div class="window-bar warm">🎯 Backpacking, heritage trips</div>
+        </div>
+        <div class="window-row">
+          <div class="window-age">Ages 18+</div>
+          <div class="window-bar cool">🚀 Their own adventures begin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-white">
+  <div class="section-inner">
+    <div class="how-header">
+      <h2>Three steps. Your whole life, mapped.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Enter your finances</h3>
+        <p>Six fields. Smart defaults. Your data never leaves your browser.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Choose what matters</h3>
+        <p>Adventures, learning, giving back, projects — pick what will fill your life.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>See your Life Map</h3>
+        <p>A visual timeline of everything ahead. Adjust and watch possibilities unfold.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="preview-header">
+      <h2>Your life at a glance</h2>
+      <p>Adventures, learning, giving, projects — all mapped out. Memory dividends show the value of doing things sooner.</p>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+      <div class="mock-body">
+        <div class="mock-scores">
+          <div class="mock-score"><div class="mock-score-label">Experiences</div><div class="mock-score-value green">18 of 21</div></div>
+          <div class="mock-score"><div class="mock-score-label">Memory Dividends</div><div class="mock-score-value green">1,240</div></div>
+          <div class="mock-score"><div class="mock-score-label">Total Investment</div><div class="mock-score-value sunset">$520K</div></div>
+          <div class="mock-score"><div class="mock-score-label">Balance at 95</div><div class="mock-score-value">$180K</div></div>
+        </div>
+        <div class="mock-timeline">
+          <div class="mock-timeline-label">Life Timeline</div>
+          <svg class="mock-curve" width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e07c3e" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#e07c3e" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,45 C8,42 15,38 25,30 C35,22 42,15 52,10 C62,5 70,4 78,8 C86,12 92,18 100,25" stroke="#e07c3e" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <path d="M0,45 C8,42 15,38 25,30 C35,22 42,15 52,10 C62,5 70,4 78,8 C86,12 92,18 100,25 L100,50 L0,50 Z" fill="url(#cf)"/>
+          </svg>
+          <div class="mock-track"></div>
+          <div class="mock-age" style="left: 8%">35</div>
+          <div class="mock-age" style="left: 25%">45</div>
+          <div class="mock-age" style="left: 45%">60</div>
+          <div class="mock-age" style="left: 65%">75</div>
+          <div class="mock-age" style="left: 82%">85</div>
+          <div class="mock-age" style="left: 95%">95</div>
+        </div>
+        <div class="mock-phases">
+          <div class="mock-phase" style="flex: 3;">
+            <div class="mock-phase-header"><span>✈️</span> Adventures</div>
+            <div class="mock-phase-icons">🌍 🏔️ 🏝️</div>
+          </div>
+          <div class="mock-phase" style="flex: 3;">
+            <div class="mock-phase-header"><span>📚</span> Learning</div>
+            <div class="mock-phase-icons">🎸 🎓 🧘</div>
+          </div>
+          <div class="mock-phase" style="flex: 2;">
+            <div class="mock-phase-header"><span>💝</span> Giving</div>
+            <div class="mock-phase-icons">🤝 🎁</div>
+          </div>
+          <div class="mock-phase" style="flex: 2;">
+            <div class="mock-phase-header"><span>🚀</span> Projects</div>
+            <div class="mock-phase-icons">🎨 📜</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-sunset cta">
+  <h2>Live the life you <em>imagine</em></h2>
+  <p>Every experience you dream about — adventures, learning, giving, projects — is within reach. See every possibility ahead and start saying yes.</p>
+  <a href="/calculator.html" class="btn-main">Build Your Life Map — Free →</a>
+  <p class="cta-note">No signup · No linked accounts · 100% private</p>
+</section>
+
+<footer>
+  <div>YoloCalc</div>
+  <div style="font-family: 'Instrument Serif', serif; font-style: italic;">Retire with memories, not just money.</div>
+  <div><a href="#">About</a></div>
+</footer>
+
+</body>
+</html>
